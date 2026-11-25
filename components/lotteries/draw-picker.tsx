@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Shuffle } from 'lucide-react'
 import { buyDrawTicket } from '@/app/actions/bets'
+import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
 import { Button, buttonVariants } from '@/components/ui/button'
 import type { DrawLottery } from '@/lib/data/lotteries'
 import { formatMoney } from '@/lib/format'
@@ -130,6 +131,7 @@ export function DrawPicker({ lotteries, isAuthed }: { lotteries: DrawLottery[]; 
           {status.text}
         </p>
       )}
+      <SavedSlipNotice />
       {isAuthed ? (
         <Button size="lg" className="h-11 font-extrabold" disabled={!ready || pending} onClick={submit}>
           {pending ? 'Buying…' : ready ? 'Buy ticket' : `Pick ${lottery.pick - numbers.length} more`}

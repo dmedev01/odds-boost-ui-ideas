@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Minus, Plus, Star } from 'lucide-react'
 import { placeHippique } from '@/app/actions/bets'
+import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { HIPPIQUE_BET_TYPES, type Race } from '@/lib/data/hippique'
 import { formatMoney, formatOdds } from '@/lib/format'
@@ -193,6 +194,7 @@ export function RaceBoard({ races, isAuthed }: { races: Race[]; isAuthed: boolea
             {status.text}
           </p>
         )}
+        <SavedSlipNotice />
         {isAuthed ? (
           <Button size="lg" className="h-11 font-extrabold" disabled={!ready || pending} onClick={submit}>
             {pending ? 'Placing…' : ready ? `Place ${type.label}` : `Select ${type.picks - runners.length} more`}

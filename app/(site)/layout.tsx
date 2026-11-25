@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { cookies } from 'next/headers'
-import { BetSlipPanel } from '@/components/betslip/betslip-panel'
+import { SlipRail } from '@/components/betslip/slip-rail'
 import { BetSlipProvider } from '@/components/betslip/betslip-provider'
 import { LITE_COOKIE, LiteModeProvider } from '@/components/lite/lite-mode'
 import { LiveClockProvider } from '@/components/live/live-clock'
@@ -43,11 +43,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <div className="mx-auto flex max-w-[1440px] gap-4 px-3 py-4 lg:px-4">
             <SportsSidebar className="hidden w-56 shrink-0 lg:flex" />
             <main className="min-w-0 flex-1">{children}</main>
-            <div className="hidden w-80 shrink-0 xl:block">
-              <div className="sticky top-[116px]">
-                <BetSlipPanel />
-              </div>
-            </div>
+            <SlipRail />
           </div>
           <SiteFooter />
           <Suspense>

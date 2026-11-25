@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Shuffle, Trash2 } from 'lucide-react'
 import { placeJackpot } from '@/app/actions/bets'
+import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { countLines, JACKPOT, JACKPOT_EVENTS, type JackpotPick } from '@/lib/data/jackpot'
 import { formatMoney, formatOdds } from '@/lib/format'
@@ -118,6 +119,7 @@ export function JackpotBoard({ isAuthed }: { isAuthed: boolean }) {
             {status.text}
           </p>
         )}
+        <SavedSlipNotice />
         {isAuthed ? (
           <Button size="lg" className="h-11 font-extrabold" disabled={!lines || tooMany || pending} onClick={submit}>
             {pending ? 'Placing ticket…' : lines ? 'Place jackpot ticket' : `Predict ${15 - completed} more match${15 - completed === 1 ? '' : 'es'}`}

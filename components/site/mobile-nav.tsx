@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { BetSlipPanel } from '@/components/betslip/betslip-panel'
 import { useBetSlip } from '@/components/betslip/betslip-provider'
+import { hasOwnTicket } from '@/components/betslip/slip-routes'
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { cn } from '@/lib/utils'
 import { isActive, MOBILE_NAV } from './nav-items'
@@ -15,6 +16,11 @@ export function MobileNav() {
   const search = useSearchParams().toString()
   const { keys, mobileOpen, setMobileOpen } = useBetSlip()
   const { t } = useI18n()
+  const ownTicket = hasOwnTicket(pathname)
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname, setMobileOpen])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -29,7 +35,7 @@ export function MobileNav() {
 
   return (
     <>
-      {keys.length > 0 && !mobileOpen && (
+      {keys.length > 0 && !mobileOpen && !ownTicket && (
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -46,14 +52,22 @@ export function MobileNav() {
       )}
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end xl:hidden" role="dialog" aria-modal="true" aria-label={t('slip.title')}>
+        <div
+          className={cn(
+            'fixed inset-0 z-50 flex flex-col justify-end xl:flex-row',
+            !ownTicket && 'xl:hidden',
+          )}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('slip.title')}
+        >
           <button
             type="button"
             className="absolute inset-0 bg-black/60"
             aria-label={t('slip.close')}
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface">
+          <div className="relative max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface xl:h-full xl:max-h-none xl:w-96 xl:rounded-none">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
