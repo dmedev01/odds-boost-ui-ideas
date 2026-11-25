@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Shuffle } from 'lucide-react'
 import { buyDrawTicket } from '@/app/actions/bets'
+import { useBetSlip } from '@/components/betslip/betslip-provider'
 import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
+import { SlipTopUp } from '@/components/betslip/slip-topup'
 import { Button, buttonVariants } from '@/components/ui/button'
 import type { DrawLottery } from '@/lib/data/lotteries'
 import { formatMoney } from '@/lib/format'
@@ -20,6 +22,9 @@ export function DrawPicker({ lotteries, isAuthed }: { lotteries: DrawLottery[]; 
   const [pending, startTransition] = useTransition()
   const lottery = lotteries.find((l) => l.id === id)!
   const ready = numbers.length === lottery.pick
+  const { balance } = useBetSlip()
+  const cost = lottery.price * multiplier
+  const shortfall = isAuthed && balance !== null ? cost - balance : 0
 
   function toggle(n: number) {
     setStatus(null)
@@ -38,15 +43,17 @@ export function DrawPicker({ lotteries, isAuthed }: { lotteries: DrawLottery[]; 
     setStatus(null)
   }
 
+  async function place() {
+    const res = await buyDrawTicket({ lotteryId: id, numbers, multiplier })
+    if (res.ok) {
+      setStatus({ ok: true, text: `${res.message}. Draw: ${lottery.nextDraw}.` })
+      setNumbers([])
+      router.refresh()
+    } else setStatus({ ok: false, text: res.error })
+  }
+
   function submit() {
-    startTransition(async () => {
-      const res = await buyDrawTicket({ lotteryId: id, numbers, multiplier })
-      if (res.ok) {
-        setStatus({ ok: true, text: `${res.message}. Draw: ${lottery.nextDraw}.` })
-        setNumbers([])
-        router.refresh()
-      } else setStatus({ ok: false, text: res.error })
-    })
+    startTransition(place)
   }
 
   return (
@@ -124,7 +131,7 @@ export function DrawPicker({ lotteries, isAuthed }: { lotteries: DrawLottery[]; 
             ))}
           </select>
         </label>
-        <span className="text-lg font-black">{formatMoney(lottery.price * multiplier)}</span>
+        <span className="text-lg font-black">{formatMoney(cost)}</span>
       </div>
       {status && (
         <p role="status" className={cn('text-sm font-bold', status.ok ? 'text-success' : 'text-destructive')}>
@@ -132,7 +139,9 @@ export function DrawPicker({ lotteries, isAuthed }: { lotteries: DrawLottery[]; 
         </p>
       )}
       <SavedSlipNotice />
-      {isAuthed ? (
+      {isAuthed && ready && shortfall > 0 ? (
+        <SlipTopUp shortfall={shortfall} onPaid={place} />
+      ) : isAuthed ? (
         <Button size="lg" className="h-11 font-extrabold" disabled={!ready || pending} onClick={submit}>
           {pending ? 'Buying…' : ready ? 'Buy ticket' : `Pick ${lottery.pick - numbers.length} more`}
         </Button>

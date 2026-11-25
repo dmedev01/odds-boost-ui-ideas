@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Minus, Plus, Star } from 'lucide-react'
 import { placeHippique } from '@/app/actions/bets'
+import { useBetSlip } from '@/components/betslip/betslip-provider'
 import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
+import { SlipTopUp } from '@/components/betslip/slip-topup'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { HIPPIQUE_BET_TYPES, type Race } from '@/lib/data/hippique'
 import { formatMoney, formatOdds } from '@/lib/format'
@@ -24,6 +26,8 @@ export function RaceBoard({ races, isAuthed }: { races: Race[]; isAuthed: boolea
   const type = HIPPIQUE_BET_TYPES.find((t) => t.id === typeId)!
   const stake = type.unit * multiplier
   const ready = runners.length === type.picks
+  const { balance } = useBetSlip()
+  const shortfall = isAuthed && balance !== null ? stake - balance : 0
 
   function selectRace(id: string) {
     setRaceId(id)
@@ -47,15 +51,17 @@ export function RaceBoard({ races, isAuthed }: { races: Race[]; isAuthed: boolea
     })
   }
 
+  async function place() {
+    const res = await placeHippique({ raceId, betTypeId: typeId, runners, multiplier })
+    if (res.ok) {
+      setStatus({ ok: true, text: res.message })
+      setRunners([])
+      router.refresh()
+    } else setStatus({ ok: false, text: res.error })
+  }
+
   function submit() {
-    startTransition(async () => {
-      const res = await placeHippique({ raceId, betTypeId: typeId, runners, multiplier })
-      if (res.ok) {
-        setStatus({ ok: true, text: res.message })
-        setRunners([])
-        router.refresh()
-      } else setStatus({ ok: false, text: res.error })
-    })
+    startTransition(place)
   }
 
   return (
@@ -195,7 +201,9 @@ export function RaceBoard({ races, isAuthed }: { races: Race[]; isAuthed: boolea
           </p>
         )}
         <SavedSlipNotice />
-        {isAuthed ? (
+        {isAuthed && ready && shortfall > 0 ? (
+          <SlipTopUp shortfall={shortfall} onPaid={place} />
+        ) : isAuthed ? (
           <Button size="lg" className="h-11 font-extrabold" disabled={!ready || pending} onClick={submit}>
             {pending ? 'Placing…' : ready ? `Place ${type.label}` : `Select ${type.picks - runners.length} more`}
           </Button>

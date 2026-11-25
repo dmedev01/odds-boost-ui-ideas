@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Shuffle, Trash2 } from 'lucide-react'
 import { placeJackpot } from '@/app/actions/bets'
+import { useBetSlip } from '@/components/betslip/betslip-provider'
 import { SavedSlipNotice } from '@/components/betslip/saved-slip-notice'
+import { SlipTopUp } from '@/components/betslip/slip-topup'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { countLines, JACKPOT, JACKPOT_EVENTS, type JackpotPick } from '@/lib/data/jackpot'
 import { formatMoney, formatOdds } from '@/lib/format'
@@ -22,6 +24,8 @@ export function JackpotBoard({ isAuthed }: { isAuthed: boolean }) {
   const completed = JACKPOT_EVENTS.filter((e) => picks[e.id]?.length).length
   const lines = completed === JACKPOT_EVENTS.length ? countLines(picks) : 0
   const tooMany = lines > JACKPOT.maxLines
+  const { balance } = useBetSlip()
+  const shortfall = isAuthed && balance !== null ? lines * JACKPOT.linePrice - balance : 0
 
   function toggle(eventId: string, pick: JackpotPick) {
     setStatus(null)
@@ -37,15 +41,17 @@ export function JackpotBoard({ isAuthed }: { isAuthed: boolean }) {
     setPicks(Object.fromEntries(JACKPOT_EVENTS.map((e) => [e.id, [OUTCOMES[Math.floor(Math.random() * 3)]]])))
   }
 
+  async function place() {
+    const res = await placeJackpot({ picks })
+    if (res.ok) {
+      setStatus({ ok: true, text: `${res.message}: ${res.lines} line${res.lines > 1 ? 's' : ''}. Good luck!` })
+      setPicks({})
+      router.refresh()
+    } else setStatus({ ok: false, text: res.error })
+  }
+
   function submit() {
-    startTransition(async () => {
-      const res = await placeJackpot({ picks })
-      if (res.ok) {
-        setStatus({ ok: true, text: `${res.message}: ${res.lines} line${res.lines > 1 ? 's' : ''}. Good luck!` })
-        setPicks({})
-        router.refresh()
-      } else setStatus({ ok: false, text: res.error })
-    })
+    startTransition(place)
   }
 
   return (
@@ -120,7 +126,9 @@ export function JackpotBoard({ isAuthed }: { isAuthed: boolean }) {
           </p>
         )}
         <SavedSlipNotice />
-        {isAuthed ? (
+        {isAuthed && lines > 0 && !tooMany && shortfall > 0 ? (
+          <SlipTopUp shortfall={shortfall} onPaid={place} />
+        ) : isAuthed ? (
           <Button size="lg" className="h-11 font-extrabold" disabled={!lines || tooMany || pending} onClick={submit}>
             {pending ? 'Placing ticket…' : lines ? 'Place jackpot ticket' : `Predict ${15 - completed} more match${15 - completed === 1 ? '' : 'es'}`}
           </Button>
