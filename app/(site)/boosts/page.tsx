@@ -2,15 +2,16 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/site/page-header'
 import { PromoSlot } from '@/components/site/promo-slot'
 import { BoostCard } from '@/components/sports/boost-card'
-import { ACCA_BOOST_TIERS, BOOST_EVENTS } from '@/lib/data/sports'
+import { ACCA_BOOST_TIERS, BOOSTS } from '@/lib/data/sports'
 import { getT } from '@/lib/i18n/server'
 
 export const metadata: Metadata = { title: 'Odds Boosts' }
 
 export default async function BoostsPage() {
   const { t } = await getT()
-  const superBoosts = BOOST_EVENTS.filter((e) => e.tier === 'Super Boost')
-  const daily = BOOST_EVENTS.filter((e) => e.tier !== 'Super Boost')
+  const sorted = [...BOOSTS].sort((a, b) => b.odds / b.was - a.odds / a.was)
+  const superBoosts = sorted.filter((b) => b.tier === 'Super Boost')
+  const daily = sorted.filter((b) => b.tier !== 'Super Boost')
 
   const groups = [
     { id: 'super', title: t('boosts.super'), events: superBoosts, accent: true },
@@ -38,8 +39,8 @@ export default async function BoostsPage() {
             {g.title}
           </h2>
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-            {g.events.map((e) => (
-              <BoostCard key={e.matchId} event={e} />
+            {g.events.map((b) => (
+              <BoostCard key={b.id} boost={b} />
             ))}
           </div>
         </section>

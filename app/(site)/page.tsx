@@ -6,7 +6,7 @@ import { HorseIcon } from '@/components/site/horse-icon'
 import { BoostCard } from '@/components/sports/boost-card'
 import { MatchList } from '@/components/sports/match-row'
 import { JACKPOT } from '@/lib/data/jackpot'
-import { BOOST_EVENTS, MATCHES } from '@/lib/data/sports'
+import { BOOST_EVENTS, BOOSTS, MATCHES } from '@/lib/data/sports'
 import { formatMoney } from '@/lib/format'
 import { getT } from '@/lib/i18n/server'
 
@@ -14,6 +14,7 @@ export default async function HomePage() {
   const { t } = await getT()
   const live = MATCHES.filter((m) => m.live)
   const upcoming = MATCHES.filter((m) => !m.live && m.sport === 'football').slice(0, 6)
+  const topBoosts = [...BOOSTS].sort((a, b) => b.odds / b.was - a.odds / a.was).slice(0, 3)
   const heroEvent = BOOST_EVENTS[0]
   const hero = heroEvent && [...heroEvent.picks].sort((a, b) => b.odds / b.was - a.odds / a.was)[0]
 
@@ -95,8 +96,8 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="no-scrollbar -mx-3 flex snap-x gap-3 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">
-            {BOOST_EVENTS.slice(0, 3).map((e) => (
-              <BoostCard key={e.matchId} event={e} className="w-[85%] max-w-80 shrink-0 snap-start lg:w-auto lg:max-w-none" />
+            {topBoosts.map((b) => (
+              <BoostCard key={b.id} boost={b} className="w-[85%] max-w-80 shrink-0 snap-start lg:w-auto lg:max-w-none" />
             ))}
           </div>
         </section>

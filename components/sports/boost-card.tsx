@@ -4,12 +4,14 @@ import { Clock, Flame } from 'lucide-react'
 import { OddsButton } from '@/components/betslip/odds-button'
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { selectionKey } from '@/lib/data/selections'
-import type { BoostEvent } from '@/lib/data/sports'
+import type { Boost } from '@/lib/data/sports'
 import { cn } from '@/lib/utils'
 
-export function BoostCard({ event, className }: { event: BoostEvent; className?: string }) {
+export function BoostCard({ boost, className }: { boost: Boost; className?: string }) {
   const { t } = useI18n()
-  const superBoost = event.tier === 'Super Boost'
+  const pct = Math.round((boost.odds / boost.was - 1) * 100)
+  const superBoost = boost.tier === 'Super Boost'
+  const title = boost.isDraw ? t('boost.draw') : t('boost.toWin', { team: boost.title })
 
   return (
     <article
@@ -29,39 +31,23 @@ export function BoostCard({ event, className }: { event: BoostEvent; className?:
           <Flame className="size-3" aria-hidden="true" />
           {t(superBoost ? 'boost.super' : 'boost.daily')}
         </span>
-        <span className="text-xs font-extrabold text-success">{t('boost.upTo', { pct: event.topPct })}</span>
+        <span className="text-xs font-extrabold text-success">{t('boost.pct', { pct })}</span>
       </div>
-
-      <div className="flex flex-col gap-0.5">
-        <h3 className="text-pretty font-extrabold leading-snug">
-          {event.home} <span className="font-semibold text-muted-foreground">vs</span> {event.away}
-        </h3>
-        <p className="truncate text-xs text-muted-foreground">
-          {event.league} · {event.live ? t('nav.live') : event.kickoff}
-        </p>
+      <div className="flex flex-col gap-1">
+        <h3 className="text-pretty font-extrabold leading-snug">{title}</h3>
+        <p className="truncate text-xs text-muted-foreground">{boost.detail}</p>
       </div>
-
-      <ul className="flex flex-col gap-1.5" aria-label={t('boost.picks')}>
-        {event.picks.map((p) => {
-          const name = p.isDraw ? t('boost.draw') : p.title
-          return (
-            <li key={p.id}>
-              <OddsButton
-                selectionKey={selectionKey(p.matchId, 'BOOST', p.id)}
-                odds={p.odds}
-                was={p.was}
-                label={name}
-                ariaLabel={t('boost.aria', { pick: name, was: p.was.toFixed(2) })}
-                className="min-h-11 w-full px-3"
-              />
-            </li>
-          )
-        })}
-      </ul>
-
+      <OddsButton
+        selectionKey={selectionKey(boost.matchId, 'BOOST', boost.id)}
+        odds={boost.odds}
+        was={boost.was}
+        label={t('boost.boosted')}
+        ariaLabel={t('boost.aria', { pick: title, was: boost.was.toFixed(2) })}
+        className="min-h-11 flex-none"
+      />
       <p className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
         <Clock className="size-3" aria-hidden="true" />
-        {t('boost.ends', { when: event.endsIn })}
+        {t('boost.ends', { when: boost.endsIn })}
       </p>
     </article>
   )
