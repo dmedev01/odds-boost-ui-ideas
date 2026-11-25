@@ -2,12 +2,20 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
+export interface LimitStatus {
+  limit: number | null
+  staked: number
+}
+
 interface BetSlipContextValue {
   keys: string[]
   isAuthed: boolean
+  balance: number | null
+  limitStatus: LimitStatus | null
   has: (key: string) => boolean
   toggle: (key: string) => void
   remove: (key: string) => void
+  load: (keys: string[]) => void
   clear: () => void
   mobileOpen: boolean
   setMobileOpen: (open: boolean) => void
@@ -15,31 +23,50 @@ interface BetSlipContextValue {
 
 const BetSlipContext = createContext<BetSlipContextValue | null>(null)
 
-export function BetSlipProvider({ children, isAuthed }: { children: React.ReactNode; isAuthed: boolean }) {
+function onePerEvent(keys: string[]) {
+  const byMatch = new Map<string, string>()
+  for (const key of keys) byMatch.set(key.split('|')[0], key)
+  return Array.from(byMatch.values()).slice(-20)
+}
+
+export function BetSlipProvider({
+  children,
+  isAuthed,
+  balance,
+  limitStatus,
+}: {
+  children: React.ReactNode
+  isAuthed: boolean
+  balance: number | null
+  limitStatus: LimitStatus | null
+}) {
   const [keys, setKeys] = useState<string[]>([])
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const toggle = useCallback((key: string) => {
-    setKeys((current) => {
-      if (current.includes(key)) return current.filter((k) => k !== key)
-      const matchId = key.split('|')[0]
-      // One selection per event: picking another outcome replaces the previous one.
-      return [...current.filter((k) => k.split('|')[0] !== matchId), key].slice(-20)
-    })
+    setKeys((current) => (current.includes(key) ? current.filter((k) => k !== key) : onePerEvent([...current, key])))
+  }, [])
+
+  const load = useCallback((incoming: string[]) => {
+    setKeys(onePerEvent(incoming))
+    setMobileOpen(true)
   }, [])
 
   const value = useMemo<BetSlipContextValue>(
     () => ({
       keys,
       isAuthed,
+      balance,
+      limitStatus,
       has: (key) => keys.includes(key),
       toggle,
       remove: (key) => setKeys((current) => current.filter((k) => k !== key)),
+      load,
       clear: () => setKeys([]),
       mobileOpen,
       setMobileOpen,
     }),
-    [keys, isAuthed, toggle, mobileOpen],
+    [keys, isAuthed, balance, limitStatus, toggle, load, mobileOpen],
   )
 
   return <BetSlipContext.Provider value={value}>{children}</BetSlipContext.Provider>

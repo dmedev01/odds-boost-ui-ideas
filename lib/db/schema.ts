@@ -55,6 +55,9 @@ export const wallets = pgTable('wallets', {
   balance: numeric('balance', { precision: 14, scale: 2 }).notNull().default('0'),
   bonus: numeric('bonus', { precision: 14, scale: 2 }).notNull().default('0'),
   currency: text('currency').notNull().default('XAF'),
+  dailyLimit: numeric('dailyLimit', { precision: 14, scale: 2 }),
+  pendingLimit: numeric('pendingLimit', { precision: 14, scale: 2 }),
+  pendingLimitAt: timestamp('pendingLimitAt', { withTimezone: true }),
   updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 })
 

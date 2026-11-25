@@ -60,7 +60,7 @@ export function MobileNav() {
             >
               <X className="size-4" aria-hidden="true" />
             </button>
-            <BetSlipPanel className="rounded-b-none" />
+            <BetSlipPanel className="rounded-b-none" headerClassName="pr-14" />
           </div>
         </div>
       )}

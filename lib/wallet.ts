@@ -36,7 +36,59 @@ export async function ensureWallet(userId: string) {
   return wallet
 }
 
+export class LimitExceededError extends Error {
+  constructor(public remaining: number) {
+    super('Daily limit exceeded')
+  }
+}
+
+export const LIMIT_INCREASE_DELAY_MS = 24 * 60 * 60 * 1000
+
+type WalletLimits = Pick<typeof wallets.$inferSelect, 'dailyLimit' | 'pendingLimit' | 'pendingLimitAt'>
+
+/** The limit in force now. A pending increase only applies once its 24h cooling-off has passed. */
+export function effectiveLimit(wallet: WalletLimits, now = new Date()): number | null {
+  if (wallet.pendingLimitAt && wallet.pendingLimitAt <= now) {
+    return wallet.pendingLimit === null ? null : Number(wallet.pendingLimit)
+  }
+  return wallet.dailyLimit === null ? null : Number(wallet.dailyLimit)
+}
+
+// The betting day runs midnight to midnight in Cameroon (Africa/Douala, UTC+1).
+const startOfDay = sql`(date_trunc('day', now() at time zone 'Africa/Douala') at time zone 'Africa/Douala')`
+
+async function stakedToday(executor: Tx | typeof db, userId: string) {
+  const [row] = await executor
+    .select({ total: sql<string>`coalesce(-sum(${transactions.amount}), 0)` })
+    .from(transactions)
+    .where(and(eq(transactions.userId, userId), eq(transactions.kind, 'bet'), gte(transactions.createdAt, startOfDay)))
+  return Number(row?.total ?? 0)
+}
+
+export async function getLimitStatus(userId: string) {
+  const [wallet] = await db.select().from(wallets).where(eq(wallets.userId, userId)).limit(1)
+  if (!wallet) return { limit: null, staked: 0, pending: null }
+  const now = new Date()
+  const pendingActive = wallet.pendingLimitAt && wallet.pendingLimitAt > now
+  return {
+    limit: effectiveLimit(wallet, now),
+    staked: await stakedToday(db, userId),
+    pending: pendingActive
+      ? { amount: wallet.pendingLimit === null ? null : Number(wallet.pendingLimit), at: wallet.pendingLimitAt!.toISOString() }
+      : null,
+  }
+}
+
 export async function debit(tx: Tx, userId: string, amount: number, kind: string, method?: string) {
+  if (kind === 'bet') {
+    const [wallet] = await tx.select().from(wallets).where(eq(wallets.userId, userId)).for('update').limit(1)
+    const limit = wallet ? effectiveLimit(wallet) : null
+    if (limit !== null) {
+      const staked = await stakedToday(tx, userId)
+      if (staked + amount > limit) throw new LimitExceededError(Math.max(0, limit - staked))
+    }
+  }
+
   const rows = await tx
     .update(wallets)
     .set({ balance: sql`${wallets.balance} - ${amount}`, updatedAt: new Date() })

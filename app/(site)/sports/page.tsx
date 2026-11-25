@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MatchList } from '@/components/sports/match-row'
+import { PromoSlot } from '@/components/site/promo-slot'
 import { MATCHES, SPORTS, type SportId } from '@/lib/data/sports'
 import { cn } from '@/lib/utils'
 
@@ -49,6 +50,8 @@ export default async function SportsPage({
           ))}
         </nav>
       </div>
+
+      <PromoSlot placement="sports" />
 
       {leagues.length === 0 ? (
         <p className="rounded-xl bg-surface p-8 text-center text-sm text-muted-foreground">

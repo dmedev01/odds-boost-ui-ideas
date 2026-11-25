@@ -3,10 +3,11 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BetHistory } from '@/components/account/bet-history'
 import { FundsForm } from '@/components/account/funds-form'
+import { LimitsForm } from '@/components/account/limits-form'
 import { SignOutButton } from '@/components/account/sign-out-button'
 import { formatMoney } from '@/lib/format'
 import { getSession } from '@/lib/session'
-import { ensureWallet, listBets, listTransactions } from '@/lib/wallet'
+import { ensureWallet, getLimitStatus, listBets, listTransactions } from '@/lib/wallet'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'My account' }
@@ -17,7 +18,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const userId = session.user.id
   const { tab } = await searchParams
 
-  const [wallet, bets, txs] = await Promise.all([ensureWallet(userId), listBets(userId, 5), listTransactions(userId, 15)])
+  const [wallet, bets, txs, limits] = await Promise.all([
+    ensureWallet(userId),
+    listBets(userId, 5),
+    listTransactions(userId, 15),
+    getLimitStatus(userId),
+  ])
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,7 +37,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
-        <FundsForm initial={tab === 'withdraw' ? 'withdraw' : 'deposit'} />
+        <div className="flex flex-col gap-4">
+          <FundsForm initial={tab === 'withdraw' ? 'withdraw' : 'deposit'} />
+          <LimitsForm limit={limits.limit} staked={limits.staked} pending={limits.pending} />
+        </div>
 
         <section aria-labelledby="tx" className="flex flex-col gap-2">
           <h2 id="tx" className="text-lg font-black">

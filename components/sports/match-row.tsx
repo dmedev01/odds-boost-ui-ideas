@@ -1,4 +1,5 @@
 import { OddsButton } from '@/components/betslip/odds-button'
+import { MomentumBar } from '@/components/live/momentum-bar'
 import { selectionKey } from '@/lib/data/selections'
 import type { Match } from '@/lib/data/sports'
 
@@ -23,6 +24,11 @@ export function MatchRow({ match }: { match: Match }) {
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm font-bold">
+          {match.live && (
+            <div className="hidden md:block">
+              <MomentumBar matchId={match.id} home={match.home} away={match.away} />
+            </div>
+          )}
           <span className="flex justify-between gap-2">
             <span className="truncate">{match.home}</span>
             {match.live && <span className="text-primary">{match.live.score[0]}</span>}
@@ -34,6 +40,11 @@ export function MatchRow({ match }: { match: Match }) {
         </div>
         <span className="hidden shrink-0 text-xs font-semibold text-muted-foreground md:block">+{match.markets}</span>
       </div>
+      {match.live && (
+        <div className="md:hidden">
+          <MomentumBar matchId={match.id} home={match.home} away={match.away} />
+        </div>
+      )}
       <div className="flex gap-1.5 md:w-[340px]">
         {picks.map((p) => (
           <OddsButton
@@ -41,6 +52,7 @@ export function MatchRow({ match }: { match: Match }) {
             selectionKey={selectionKey(match.id, '1X2', p)}
             odds={match.odds[p]!}
             label={p}
+            live={Boolean(match.live)}
             ariaLabel={`${event}: ${p === '1' ? match.home : p === '2' ? match.away : 'Draw'}`}
           />
         ))}
@@ -49,6 +61,7 @@ export function MatchRow({ match }: { match: Match }) {
             selectionKey={selectionKey(match.id, 'OU', 'O')}
             odds={match.ou.over}
             label={`O${match.ou.line}`}
+            live={Boolean(match.live)}
             ariaLabel={`${event}: Over ${match.ou.line}`}
             className="hidden sm:flex"
           />

@@ -82,3 +82,47 @@
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+@keyframes odds-flash-up {
+  from {
+    background-color: color-mix(in oklab, var(--success) 45%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+@keyframes odds-flash-down {
+  from {
+    background-color: color-mix(in oklab, var(--destructive) 45%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.odds-flash-up {
+  animation: odds-flash-up 1.6s ease-out;
+}
+.odds-flash-down {
+  animation: odds-flash-down 1.6s ease-out;
+}
+.live-bar {
+  transition: width 1.2s ease-in-out;
+}
+
+/* Data saver: no motion, no decorative gradients. Images are skipped in LiteImage. */
+[data-lite='on'] *,
+[data-lite='on'] *::before,
+[data-lite='on'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .odds-flash-up,
+  .odds-flash-down {
+    animation: none;
+  }
+  .live-bar {
+    transition: none;
+  }
+}

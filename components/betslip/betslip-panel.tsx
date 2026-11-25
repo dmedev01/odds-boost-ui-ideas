@@ -3,26 +3,35 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { CheckCircle2, Flame, Ticket, Trash2, X } from 'lucide-react'
+import { CheckCircle2, Flame, ShieldCheck, Ticket, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { useLiveBucket } from '@/components/live/live-clock'
 import { placeSportsBet } from '@/app/actions/bets'
 import { resolveSelection } from '@/lib/data/selections'
-import { accaBoostPct, ACCA_BOOST_TIERS } from '@/lib/data/sports'
+import { accaBoostPct } from '@/lib/data/sports'
 import { formatMoney, formatOdds, STAKE_MIN } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { BoostLadder } from './boost-ladder'
 import { useBetSlip } from './betslip-provider'
+import { SlipShare } from './slip-share'
+import { SlipTopUp } from './slip-topup'
 
 const QUICK_STAKES = [500, 1000, 2500, 5000]
 
-export function BetSlipPanel({ className }: { className?: string }) {
-  const { keys, remove, clear, isAuthed } = useBetSlip()
+export function BetSlipPanel({ className, headerClassName }: { className?: string; headerClassName?: string }) {
+  const { keys, remove, clear, isAuthed, balance, limitStatus } = useBetSlip()
   const router = useRouter()
+  const bucket = useLiveBucket()
   const [mode, setMode] = useState<'single' | 'multi'>('multi')
   const [stake, setStake] = useState(1000)
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
+  const [placed, setPlaced] = useState<{ keys: string[]; odds: number } | null>(null)
   const [pending, startTransition] = useTransition()
 
-  const selections = useMemo(() => keys.map(resolveSelection).filter((s) => s !== null), [keys])
+  const selections = useMemo(
+    () => keys.map((k) => resolveSelection(k, bucket)).filter((s) => s !== null),
+    [keys, bucket],
+  )
   const hasBoost = selections.some((s) => s.market === 'BOOST')
   const multiAllowed = selections.length > 1 && !hasBoost
   const effectiveMode = selections.length <= 1 || !multiAllowed ? 'single' : mode
@@ -30,36 +39,48 @@ export function BetSlipPanel({ className }: { className?: string }) {
   const totalOdds = selections.reduce((acc, s) => acc * s.odds, 1)
   const bonusPct = effectiveMode === 'multi' ? accaBoostPct(selections.length) : 0
   const totalStake = effectiveMode === 'single' ? stake * selections.length : stake
+  const boostExtra = effectiveMode === 'multi' ? ((stake * totalOdds - stake) * bonusPct) / 100 : 0
   const potential =
-    effectiveMode === 'single'
-      ? selections.reduce((sum, s) => sum + stake * s.odds, 0)
-      : stake * totalOdds + ((stake * totalOdds - stake) * bonusPct) / 100
-  const nextTier = ACCA_BOOST_TIERS.find((t) => t.legs > selections.length)
+    effectiveMode === 'single' ? selections.reduce((sum, s) => sum + stake * s.odds, 0) : stake * totalOdds + boostExtra
+
+  const shortfall = isAuthed && balance !== null ? totalStake - balance : 0
+  const remainingToday =
+    limitStatus?.limit != null ? Math.max(0, limitStatus.limit - limitStatus.staked) : null
+  const overLimit = remainingToday !== null && totalStake > remainingToday
+
+  async function place() {
+    const seenOdds = Object.fromEntries(selections.map((s) => [s.key, s.odds]))
+    const result = await placeSportsBet({ keys, stake, mode: effectiveMode, seenOdds })
+    if (result.ok) {
+      setFeedback({ ok: true, text: result.message })
+      setPlaced({ keys, odds: totalOdds })
+      clear()
+      router.refresh()
+    } else {
+      setFeedback({ ok: false, text: result.error })
+    }
+  }
 
   function submit() {
     setFeedback(null)
-    startTransition(async () => {
-      const result = await placeSportsBet({ keys, stake, mode: effectiveMode })
-      if (result.ok) {
-        setFeedback({ ok: true, text: result.message })
-        clear()
-        router.refresh()
-      } else {
-        setFeedback({ ok: false, text: result.error })
-      }
-    })
+    setPlaced(null)
+    startTransition(place)
   }
 
   return (
     <section aria-labelledby="betslip-title" className={cn('flex flex-col rounded-xl bg-surface', className)}>
-      <header className="flex items-center justify-between rounded-t-xl bg-brand px-4 py-3">
+      <header className={cn('flex items-center justify-between rounded-t-xl bg-brand px-4 py-3', headerClassName)}>
         <h2 id="betslip-title" className="flex items-center gap-2 font-extrabold">
           <Ticket className="size-4" aria-hidden="true" />
           Bet slip
           <span className="rounded-full bg-primary px-2 text-xs leading-5">{selections.length}</span>
         </h2>
         {selections.length > 0 && (
-          <button type="button" onClick={clear} className="flex items-center gap-1 text-xs text-white/80 hover:text-white">
+          <button
+            type="button"
+            onClick={clear}
+            className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground"
+          >
             <Trash2 className="size-3.5" aria-hidden="true" />
             Clear all
           </button>
@@ -70,17 +91,20 @@ export function BetSlipPanel({ className }: { className?: string }) {
         <div
           role="status"
           className={cn(
-            'mx-3 mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold',
+            'mx-3 mt-3 flex flex-col gap-2 rounded-lg px-3 py-2 text-sm font-semibold',
             feedback.ok ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive',
           )}
         >
-          {feedback.ok && <CheckCircle2 className="size-4" aria-hidden="true" />}
-          {feedback.text}
-          {feedback.ok && (
-            <Link href="/my-bets" className="ml-auto underline underline-offset-2">
-              View
-            </Link>
-          )}
+          <p className="flex items-center gap-2">
+            {feedback.ok && <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />}
+            {feedback.text}
+            {feedback.ok && (
+              <Link href="/my-bets" className="ml-auto underline underline-offset-2">
+                View
+              </Link>
+            )}
+          </p>
+          {placed && <SlipShare keys={placed.keys} totalOdds={placed.odds} className="text-foreground" />}
         </div>
       )}
 
@@ -88,7 +112,7 @@ export function BetSlipPanel({ className }: { className?: string }) {
         <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
           <Ticket className="size-8 text-muted-foreground" aria-hidden="true" />
           <p className="font-bold">Your bet slip is empty</p>
-          <p className="text-sm text-muted-foreground">Tap any odds to add a selection. Add 3+ for an Accumulator Boost.</p>
+          <p className="text-sm text-muted-foreground">Tap any odds to add a selection. Add 3+ to start climbing the Boost Ladder.</p>
         </div>
       ) : (
         <>
@@ -104,7 +128,7 @@ export function BetSlipPanel({ className }: { className?: string }) {
                   onClick={() => setMode(m)}
                   className={cn(
                     'rounded-md py-1.5 transition-colors disabled:opacity-40',
-                    effectiveMode === m ? 'bg-brand text-white' : 'text-muted-foreground',
+                    effectiveMode === m ? 'bg-brand text-foreground' : 'text-muted-foreground',
                   )}
                 >
                   {m === 'single' ? 'Singles' : 'Multiple'}
@@ -116,34 +140,34 @@ export function BetSlipPanel({ className }: { className?: string }) {
             <p className="mx-3 mt-2 text-xs text-muted-foreground">Boosted odds can only be placed as singles.</p>
           )}
 
-          <ul className="flex max-h-[40vh] flex-col gap-2 overflow-y-auto p-3">
+          <ul className="flex max-h-[36vh] flex-col gap-2 overflow-y-auto p-3">
             {selections.map((s) => (
               <li
                 key={s.key}
-                className={cn(
-                  'relative rounded-lg bg-background p-3 pr-9',
-                  s.market === 'BOOST' && 'ring-1 ring-boost/60',
-                )}
+                className={cn('relative rounded-lg bg-background p-3 pr-9', s.market === 'BOOST' && 'ring-1 ring-boost/60')}
               >
                 {s.market === 'BOOST' && (
-                  <span className="mb-1 inline-flex items-center gap-1 rounded bg-boost px-1.5 text-[10px] font-extrabold uppercase">
+                  <span className="mb-1 inline-flex items-center gap-1 rounded bg-boost px-1.5 text-[10px] font-extrabold uppercase text-boost-foreground">
                     <Flame className="size-3" aria-hidden="true" />
                     {s.marketLabel}
                   </span>
                 )}
                 <p className="text-sm font-bold leading-snug">{s.pickLabel}</p>
                 <p className="text-xs text-muted-foreground">
+                  {s.live && <span className="mr-1 font-extrabold text-destructive">LIVE</span>}
                   {s.market !== 'BOOST' && `${s.marketLabel} · `}
                   {s.eventLabel}
                 </p>
                 <p className="mt-1 flex items-baseline gap-2 text-sm font-extrabold">
                   {s.was && <span className="text-xs text-muted-foreground line-through">{formatOdds(s.was)}</span>}
-                  <span className={s.market === 'BOOST' ? 'text-boost' : ''}>{formatOdds(s.odds)}</span>
+                  <span key={s.odds} className={cn('rounded px-0.5', s.market === 'BOOST' && 'text-boost', s.live && 'odds-flash-up')}>
+                    {formatOdds(s.odds)}
+                  </span>
                 </p>
                 <button
                   type="button"
                   onClick={() => remove(s.key)}
-                  className="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:bg-surface hover:text-white"
+                  className="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
                   aria-label={`Remove ${s.pickLabel}`}
                 >
                   <X className="size-4" aria-hidden="true" />
@@ -153,18 +177,7 @@ export function BetSlipPanel({ className }: { className?: string }) {
           </ul>
 
           <div className="flex flex-col gap-3 border-t border-border p-3">
-            {effectiveMode === 'multi' && (
-              <div className="rounded-lg bg-boost/10 px-3 py-2 text-xs">
-                {bonusPct > 0 ? (
-                  <p className="font-bold text-boost">Accumulator Boost +{bonusPct}% applied</p>
-                ) : null}
-                {nextTier && (
-                  <p className="text-muted-foreground">
-                    Add {nextTier.legs - selections.length} more for +{nextTier.pct}% boost
-                  </p>
-                )}
-              </div>
-            )}
+            {effectiveMode === 'multi' && <BoostLadder legs={selections.length} extraWin={boostExtra} />}
 
             <label className="flex flex-col gap-1 text-xs font-semibold text-muted-foreground">
               {effectiveMode === 'single' && selections.length > 1 ? 'Stake per bet (FCFA)' : 'Stake (FCFA)'}
@@ -175,7 +188,7 @@ export function BetSlipPanel({ className }: { className?: string }) {
                 step={100}
                 value={stake}
                 onChange={(e) => setStake(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                className="h-10 rounded-lg border border-input bg-background px-3 text-base font-bold text-white"
+                className="h-10 rounded-lg border border-input bg-background px-3 text-base font-bold text-foreground"
               />
             </label>
             <div className="grid grid-cols-4 gap-1.5">
@@ -184,10 +197,7 @@ export function BetSlipPanel({ className }: { className?: string }) {
                   key={q}
                   type="button"
                   onClick={() => setStake(q)}
-                  className={cn(
-                    'rounded-md bg-background py-1.5 text-xs font-bold hover:bg-accent',
-                    stake === q && 'bg-brand',
-                  )}
+                  className={cn('rounded-md bg-background py-1.5 text-xs font-bold hover:bg-accent', stake === q && 'bg-brand')}
                 >
                   {q.toLocaleString('en-US')}
                 </button>
@@ -211,20 +221,40 @@ export function BetSlipPanel({ className }: { className?: string }) {
               </div>
             </dl>
 
-            {isAuthed ? (
+            {remainingToday !== null && (
+              <p className={cn('text-xs', overLimit ? 'font-bold text-destructive' : 'text-muted-foreground')}>
+                Daily limit: {formatMoney(remainingToday)} left today
+              </p>
+            )}
+
+            {!isAuthed ? (
+              <Link href="/sign-in" className={buttonVariants({ size: 'lg', className: 'h-11 w-full text-base font-extrabold' })}>
+                Log in to place bet
+              </Link>
+            ) : shortfall > 0 && !overLimit ? (
+              <SlipTopUp shortfall={shortfall} onPaid={place} />
+            ) : (
               <Button
                 size="lg"
                 onClick={submit}
-                disabled={pending || stake < STAKE_MIN}
+                disabled={pending || stake < STAKE_MIN || overLimit}
                 className="h-11 w-full text-base font-extrabold"
               >
                 {pending ? 'Placing bet...' : `Place bet · ${formatMoney(totalStake)}`}
               </Button>
-            ) : (
-              <Link href="/sign-in" className={buttonVariants({ size: 'lg', className: 'h-11 w-full text-base font-extrabold' })}>
-                Log in to place bet
-              </Link>
             )}
+
+            <SlipShare keys={keys} totalOdds={totalOdds} />
+
+            <p className="flex items-center gap-1.5 border-t border-border pt-3 text-[11px] text-muted-foreground">
+              <ShieldCheck className="size-3.5 shrink-0 text-success" aria-hidden="true" />
+              <span>
+                18+ · Withdraw to MoMo anytime ·{' '}
+                <Link href="/account?tab=limits" className="underline underline-offset-2 hover:text-foreground">
+                  {limitStatus?.limit != null ? 'Manage limit' : 'Set a daily limit'}
+                </Link>
+              </span>
+            </p>
           </div>
         </>
       )}

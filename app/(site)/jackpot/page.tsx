@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { JackpotBoard } from '@/components/jackpot/jackpot-board'
 import { PageHeader } from '@/components/site/page-header'
+import { PromoSlot } from '@/components/site/promo-slot'
 import { JACKPOT } from '@/lib/data/jackpot'
 import { formatMoney } from '@/lib/format'
 import { getSession } from '@/lib/session'
@@ -25,6 +26,8 @@ export default async function JackpotPage() {
           ))}
         </ul>
       </PageHeader>
+
+      <PromoSlot placement="jackpot" />
       <JackpotBoard isAuthed={Boolean(session?.user)} />
     </div>
   )

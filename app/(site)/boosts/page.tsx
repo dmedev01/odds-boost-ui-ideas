@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/site/page-header'
+import { PromoSlot } from '@/components/site/promo-slot'
 import { BoostCard } from '@/components/sports/boost-card'
 import { ACCA_BOOST_TIERS, BOOSTS } from '@/lib/data/sports'
 
@@ -17,6 +18,8 @@ export default function BoostsPage() {
         description="Hand-picked selections where we pay more than anyone else. Boosted odds are locked when your bet is placed and a max stake applies per boost."
         image="/images/hero-football.png"
       />
+
+      <PromoSlot placement="boosts" />
 
       <section aria-labelledby="super" className="flex flex-col gap-3">
         <h2 id="super" className="text-lg font-black text-boost">

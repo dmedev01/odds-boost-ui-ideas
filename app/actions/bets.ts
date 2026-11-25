@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { bets } from '@/lib/db/schema'
 import { getUserId } from '@/lib/session'
-import { credit, debit, ensureWallet, InsufficientFundsError, newReference } from '@/lib/wallet'
+import { credit, debit, ensureWallet, InsufficientFundsError, LimitExceededError, newReference } from '@/lib/wallet'
+import { currentBucket } from '@/lib/data/live'
 import { resolveSelection } from '@/lib/data/selections'
 import { accaBoostPct } from '@/lib/data/sports'
 import { countLines, JACKPOT, JACKPOT_EVENTS, type JackpotPick } from '@/lib/data/jackpot'
@@ -35,6 +36,12 @@ async function withWallet<T>(run: (userId: string) => Promise<ActionResult<T>>):
     if (error instanceof InsufficientFundsError) {
       return { ok: false, error: 'Insufficient balance. Please make a deposit.' }
     }
+    if (error instanceof LimitExceededError) {
+      return {
+        ok: false,
+        error: `This bet goes over your daily limit. You can stake ${error.remaining.toLocaleString('en-US')} FCFA more today.`,
+      }
+    }
     console.error('[bets] action failed', error)
     return { ok: false, error: 'Something went wrong. Please try again.' }
   }
@@ -44,6 +51,7 @@ export async function placeSportsBet(input: {
   keys: string[]
   stake: number
   mode: 'single' | 'multi'
+  seenOdds?: Record<string, number>
 }): Promise<ActionResult<{ count: number }>> {
   const keys = Array.from(new Set(Array.isArray(input?.keys) ? input.keys : []))
   if (keys.length === 0 || keys.length > 20) return { ok: false, error: 'Add between 1 and 20 selections.' }
@@ -51,9 +59,24 @@ export async function placeSportsBet(input: {
     return { ok: false, error: `Stake must be a whole amount between ${STAKE_MIN} and ${STAKE_MAX} FCFA.` }
   }
 
-  const selections = keys.map(resolveSelection)
+  const bucket = currentBucket()
+  const selections = keys.map((k) => resolveSelection(k, bucket))
   if (selections.some((s) => !s)) return { ok: false, error: 'One of your selections is no longer available.' }
   const resolved = selections.filter((s) => s !== null)
+
+  // Live prices: accept the price the user saw if it is the current one or the
+  // one from the previous tick (covers a price change during the request).
+  for (const s of resolved) {
+    if (!s.live) continue
+    const seen = Number(input.seenOdds?.[s.key])
+    const previous = resolveSelection(s.key, bucket - 1)?.odds
+    if (seen === s.odds) continue
+    if (seen === previous) {
+      s.odds = seen
+      continue
+    }
+    return { ok: false, error: 'Live odds changed. Check the new prices and place your bet again.' }
+  }
   const mode = resolved.length === 1 ? 'single' : input.mode
 
   if (mode === 'multi') {

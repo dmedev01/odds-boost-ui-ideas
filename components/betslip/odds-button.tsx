@@ -1,5 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+import { ArrowDown, ArrowUp } from 'lucide-react'
+import { useLiveBucket } from '@/components/live/live-clock'
+import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useBetSlip } from './betslip-provider'
@@ -10,6 +14,7 @@ export function OddsButton({
   label,
   ariaLabel,
   was,
+  live,
   className,
 }: {
   selectionKey: string
@@ -17,9 +22,19 @@ export function OddsButton({
   label?: string
   ariaLabel: string
   was?: number
+  live?: boolean
   className?: string
 }) {
   const { has, toggle } = useBetSlip()
+  const bucket = useLiveBucket()
+  const current = live ? (resolveSelection(selectionKey, bucket)?.odds ?? odds) : odds
+  const [previous, setPrevious] = useState(current)
+  const [direction, setDirection] = useState<'up' | 'down' | null>(null)
+  if (current !== previous) {
+    setPrevious(current)
+    setDirection(current > previous ? 'up' : 'down')
+  }
+
   const active = has(selectionKey)
   const boosted = was !== undefined
 
@@ -27,26 +42,44 @@ export function OddsButton({
     <button
       type="button"
       aria-pressed={active}
-      aria-label={`${ariaLabel} at ${formatOdds(odds)}`}
+      aria-label={`${ariaLabel} at ${formatOdds(current)}`}
       onClick={() => toggle(selectionKey)}
       className={cn(
-        'flex min-h-10 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-2.5 text-sm font-extrabold transition-colors',
+        'flex min-h-10 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-md px-2 text-sm font-extrabold transition-colors',
         active
           ? 'bg-primary text-primary-foreground'
           : boosted
-            ? 'bg-boost/15 text-white ring-1 ring-boost/50 hover:bg-boost/25'
-            : 'bg-surface-2 text-white hover:bg-accent',
+            ? 'bg-boost/15 text-foreground ring-1 ring-boost/50 hover:bg-boost/25'
+            : 'bg-surface-2 text-foreground hover:bg-accent',
         className,
       )}
     >
-      {label && <span className={cn('truncate text-xs font-bold', active ? 'text-white/80' : 'text-muted-foreground')}>{label}</span>}
-      <span className="ml-auto flex items-baseline gap-1.5">
+      {label && (
+        <span className={cn('shrink-0 text-xs font-bold', active ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+          {label}
+        </span>
+      )}
+      <span className="ml-auto flex min-w-0 items-center gap-0.5">
         {boosted && (
-          <span className={cn('text-xs font-semibold line-through', active ? 'text-white/70' : 'text-muted-foreground')}>
+          <span className={cn('text-xs font-semibold line-through', active ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
             {formatOdds(was)}
           </span>
         )}
-        <span className={cn(boosted && !active && 'text-boost')}>{formatOdds(odds)}</span>
+        {direction && !active && (
+          <span key={`${current}-arrow`} aria-hidden="true" className={direction === 'up' ? 'text-success' : 'text-destructive'}>
+            {direction === 'up' ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />}
+          </span>
+        )}
+        <span
+          key={current}
+          className={cn(
+            'rounded px-0.5',
+            boosted && !active && 'text-boost',
+            direction && !active && (direction === 'up' ? 'odds-flash-up' : 'odds-flash-down'),
+          )}
+        >
+          {formatOdds(current)}
+        </span>
       </span>
     </button>
   )

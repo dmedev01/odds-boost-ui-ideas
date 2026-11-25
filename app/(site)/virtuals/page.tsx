@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Clock } from 'lucide-react'
 import { PageHeader } from '@/components/site/page-header'
+import { PromoSlot } from '@/components/site/promo-slot'
 import { RocketCrash } from '@/components/virtuals/rocket-crash'
 import { VIRTUAL_GAMES } from '@/lib/data/catalog'
 
@@ -17,6 +18,8 @@ export default function VirtualsPage() {
         description="Non-stop virtual leagues, races and crash games. Rounds settle in seconds, 24/7."
         image="/images/virtuals.png"
       />
+
+      <PromoSlot placement="virtuals" />
 
       <RocketCrash />
 

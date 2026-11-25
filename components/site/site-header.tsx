@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Plus, UserRound } from 'lucide-react'
+import { DataSaverToggle } from '@/components/lite/lite-mode'
 import { buttonVariants } from '@/components/ui/button'
 import { formatMoney } from '@/lib/format'
 import { Logo } from './logo'
@@ -12,6 +13,7 @@ export function SiteHeader({ user, balance }: { user: { name: string } | null; b
         <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-3 px-3 lg:px-4">
           <Logo />
           <div className="ml-auto flex items-center gap-2">
+            <DataSaverToggle />
             {user ? (
               <>
                 <Link

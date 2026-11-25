@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DrawPicker } from '@/components/lotteries/draw-picker'
 import { InstantCard } from '@/components/lotteries/instant-card'
 import { PageHeader } from '@/components/site/page-header'
+import { PromoSlot } from '@/components/site/promo-slot'
 import { DRAW_LOTTERIES, INSTANT_GAMES } from '@/lib/data/lotteries'
 import { getSession } from '@/lib/session'
 
@@ -18,6 +19,8 @@ export default async function LotteriesPage() {
         title="Lotteries"
         description="Pick your numbers for the next scheduled draw, or reveal an instant ticket and know straight away."
       />
+
+      <PromoSlot placement="lotteries" />
 
       <section aria-labelledby="draw" className="flex flex-col gap-3">
         <h2 id="draw" className="text-lg font-black">
