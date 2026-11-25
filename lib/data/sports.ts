@@ -36,10 +36,30 @@ export interface Boost {
   tier: 'Super Boost' | 'Daily Boost' | 'Accumulator Boost'
   title: string
   detail: string
+  /** Outcome position in the market: '1', 'X' or '2'. */
+  slot: '1' | 'X' | '2'
+  isDraw: boolean
   was: number
   odds: number
-  maxStake: number
+  maxStake?: number
+  endsAt: number
   endsIn: string
+}
+
+/** All boosted outcomes of one match, as the live site groups them. */
+export interface BoostEvent {
+  matchId: string
+  home: string
+  away: string
+  league: string
+  kickoff: string
+  live: boolean
+  tier: 'Super Boost' | 'Daily Boost'
+  /** Largest lift across the boosted outcomes, in percent. */
+  topPct: number
+  endsAt: number
+  endsIn: string
+  picks: Boost[]
 }
 
 interface SnapshotMatch {
@@ -123,19 +143,46 @@ export const BOOSTS: Boost[] = snapshot.boosts
   .map((b, i) => {
     const match = matchById.get(b.matchId)!
     const lift = b.now / b.was
-    const pick = b.pick === b.home || b.pick === b.away ? `${b.pick} to win` : b.pick
+    const isDraw = b.pick === 'Draw'
+    const slot = isDraw ? ('X' as const) : b.pick === b.away ? ('2' as const) : ('1' as const)
+    const endsAt = (b.boostEnd ?? b.time) + shift
     return {
       id: `bo${i + 1}`,
       matchId: b.matchId,
       tier: lift >= 1.35 ? ('Super Boost' as const) : ('Daily Boost' as const),
-      title: pick,
+      title: b.pick,
       detail: `${b.home} vs ${b.away} · ${match.league}`,
+      slot,
+      isDraw,
       was: round(b.was),
       odds: round(b.now),
-      maxStake: lift >= 1.35 ? 25_000 : 50_000,
-      endsIn: match.kickoff,
+      endsAt,
+      endsIn: kickoffLabel(endsAt),
     }
   })
+
+const SLOT_ORDER = { '1': 0, X: 1, '2': 2 } as const
+
+export const BOOST_EVENTS: BoostEvent[] = [...Map.groupBy(BOOSTS, (b) => b.matchId)]
+  .map(([matchId, picks]) => {
+    const match = matchById.get(matchId)!
+    const topPct = Math.max(...picks.map((p) => Math.round((p.odds / p.was - 1) * 100)))
+    const endsAt = Math.min(...picks.map((p) => p.endsAt))
+    return {
+      matchId,
+      home: match.home,
+      away: match.away,
+      league: match.league,
+      kickoff: match.kickoff,
+      live: Boolean(match.live),
+      tier: topPct >= 35 ? ('Super Boost' as const) : ('Daily Boost' as const),
+      topPct,
+      endsAt,
+      endsIn: kickoffLabel(endsAt),
+      picks: [...picks].sort((a, b) => SLOT_ORDER[a.slot] - SLOT_ORDER[b.slot]),
+    }
+  })
+  .sort((a, b) => b.topPct - a.topPct || a.endsAt - b.endsAt)
 
 export function getBoost(id: string) {
   return BOOSTS.find((b) => b.id === id)

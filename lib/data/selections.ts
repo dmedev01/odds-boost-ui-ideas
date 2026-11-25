@@ -71,10 +71,9 @@ export function resolveSelection(key: string, bucket: number = currentBucket()):
       pick,
       eventLabel,
       marketLabel: boost.tier,
-      pickLabel: boost.title,
+      pickLabel: boost.isDraw ? 'Draw' : boost.title,
       odds: boost.odds,
       was: boost.was,
-      maxStake: boost.maxStake,
     }
   }
 

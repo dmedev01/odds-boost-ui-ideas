@@ -181,6 +181,8 @@ for (const e of ok(/event\/boosted/)) {
             was: round(was),
             now: round(x.odds),
             time: o.time,
+            boostEnd: Number(x.endDate) || o.boostEnd || null,
+            live: Boolean(o.isLive),
           })
         }
       }

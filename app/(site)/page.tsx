@@ -6,24 +6,27 @@ import { HorseIcon } from '@/components/site/horse-icon'
 import { BoostCard } from '@/components/sports/boost-card'
 import { MatchList } from '@/components/sports/match-row'
 import { JACKPOT } from '@/lib/data/jackpot'
-import { BOOSTS, MATCHES } from '@/lib/data/sports'
+import { BOOST_EVENTS, MATCHES } from '@/lib/data/sports'
 import { formatMoney } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 
-const PRODUCTS = [
-  { href: '/jackpot', label: 'Mega Jackpot', sub: formatMoney(JACKPOT.pool), icon: Trophy },
-  { href: '/hippique', label: 'Hippique', sub: 'Quinté+ today', icon: HorseIcon },
-  { href: '/virtuals', label: 'Virtuals', sub: 'Crash & leagues', icon: Rocket },
-  { href: '/lotteries', label: 'Lotteries', sub: 'Draw & instant', icon: Dices },
-]
-
-export default function HomePage() {
+export default async function HomePage() {
+  const { t } = await getT()
   const live = MATCHES.filter((m) => m.live)
   const upcoming = MATCHES.filter((m) => !m.live && m.sport === 'football').slice(0, 6)
-  const hero = [...BOOSTS].sort((a, b) => b.odds / b.was - a.odds / a.was)[0]
+  const heroEvent = BOOST_EVENTS[0]
+  const hero = heroEvent && [...heroEvent.picks].sort((a, b) => b.odds / b.was - a.odds / a.was)[0]
+
+  const products = [
+    { href: '/jackpot', label: t('home.jackpot'), sub: formatMoney(JACKPOT.pool), icon: Trophy },
+    { href: '/hippique', label: t('home.hippique'), sub: t('home.hippiqueSub'), icon: HorseIcon },
+    { href: '/virtuals', label: t('home.virtuals'), sub: t('home.virtualsSub'), icon: Rocket },
+    { href: '/lotteries', label: t('home.lotteries'), sub: t('home.lotteriesSub'), icon: Dices },
+  ]
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="relative overflow-hidden rounded-xl bg-brand" aria-label="Featured offer">
+      <section className="relative overflow-hidden rounded-xl bg-brand" aria-label={t('home.featured')}>
         <Image
           src="/images/hero-football.png"
           alt=""
@@ -36,33 +39,35 @@ export default function HomePage() {
           {hero ? (
             <>
               <p className="text-xs font-extrabold uppercase tracking-widest text-primary">
-                {hero.detail.split(' · ')[1]} · {hero.endsIn}
+                {heroEvent.league} · {t('boost.ends', { when: heroEvent.endsIn })}
               </p>
               <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">
-                {hero.title} boosted to <span className="text-boost">{hero.odds.toFixed(2)}</span>
+                {t('boost.boostedTo', { pick: hero.isDraw ? t('boost.draw') : hero.title })}{' '}
+                <span className="text-boost">{hero.odds.toFixed(2)}</span>
               </h1>
               <p className="text-sm leading-relaxed text-white/80">
-                {hero.detail.split(' · ')[0]}. Was {hero.was.toFixed(2)}. Max stake {formatMoney(hero.maxStake)}.
+                {t('boost.was', { match: `${heroEvent.home} vs ${heroEvent.away}`, was: hero.was.toFixed(2) })}
               </p>
             </>
           ) : (
-            <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">
-              Boosted odds on every big match
-            </h1>
+            <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">{t('home.heroFallback')}</h1>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link href="/boosts" className={buttonVariants({ size: 'lg', className: 'font-extrabold' })}>
-              Bet the boost
+              {t('home.betBoost')}
             </Link>
-            <Link href="/promotions" className={buttonVariants({ size: 'lg', variant: 'outline', className: 'font-extrabold' })}>
-              Welcome bonus
+            <Link
+              href="/promotions"
+              className={buttonVariants({ size: 'lg', variant: 'outline', className: 'font-extrabold' })}
+            >
+              {t('home.welcome')}
             </Link>
           </div>
         </div>
       </section>
 
-      <nav aria-label="Games" className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        {PRODUCTS.map(({ href, label, sub, icon: Icon }) => (
+      <nav aria-label={t('home.games')} className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        {products.map(({ href, label, sub, icon: Icon }) => (
           <Link
             key={href}
             href={href}
@@ -79,37 +84,39 @@ export default function HomePage() {
         ))}
       </nav>
 
-      <section aria-labelledby="boosts-heading" className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 id="boosts-heading" className="text-lg font-black">
-            Today&apos;s <span className="text-boost">Odds Boosts</span>
-          </h2>
-          <Link href="/boosts" className="flex items-center text-sm font-bold text-primary">
-            All boosts <ChevronRight className="size-4" aria-hidden="true" />
-          </Link>
-        </div>
-        <div className="no-scrollbar -mx-3 flex snap-x gap-3 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">
-          {BOOSTS.slice(0, 3).map((b) => (
-            <BoostCard key={b.id} boost={b} className="w-72 shrink-0 snap-start lg:w-auto" />
-          ))}
-        </div>
-      </section>
+      {BOOST_EVENTS.length > 0 && (
+        <section aria-labelledby="boosts-heading" className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="boosts-heading" className="text-lg font-black text-boost">
+              {t('home.boostsTitle')}
+            </h2>
+            <Link href="/boosts" className="flex shrink-0 items-center text-sm font-bold text-primary">
+              {t('home.allBoosts')} <ChevronRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="no-scrollbar -mx-3 flex snap-x gap-3 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">
+            {BOOST_EVENTS.slice(0, 3).map((e) => (
+              <BoostCard key={e.matchId} event={e} className="w-[85%] max-w-80 shrink-0 snap-start lg:w-auto lg:max-w-none" />
+            ))}
+          </div>
+        </section>
+      )}
 
       <MatchList
-        title="Live now"
+        title={t('home.liveNow')}
         matches={live}
         action={
           <Link href="/sports?live=1" className="text-xs font-bold text-primary">
-            View all live
+            {t('home.viewAllLive')}
           </Link>
         }
       />
       <MatchList
-        title="Top football"
+        title={t('home.topFootball')}
         matches={upcoming}
         action={
           <Link href="/sports" className="text-xs font-bold text-primary">
-            All matches
+            {t('home.allMatches')}
           </Link>
         }
       />
