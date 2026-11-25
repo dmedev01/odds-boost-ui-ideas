@@ -11,6 +11,8 @@ import { resolveSelection } from '@/lib/data/selections'
 import { accaBoostPct } from '@/lib/data/sports'
 import { formatMoney, formatOdds, STAKE_MIN } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useI18n } from '@/components/i18n/i18n-provider'
+import { BookingCodeInput } from './booking-code-input'
 import { BoostLadder } from './boost-ladder'
 import { useBetSlip } from './betslip-provider'
 import { SlipShare } from './slip-share'
@@ -21,6 +23,7 @@ const QUICK_STAKES = [500, 1000, 2500, 5000]
 export function BetSlipPanel({ className, headerClassName }: { className?: string; headerClassName?: string }) {
   const { keys, remove, clear, isAuthed, balance, limitStatus } = useBetSlip()
   const router = useRouter()
+  const { t } = useI18n()
   const bucket = useLiveBucket()
   const [mode, setMode] = useState<'single' | 'multi'>('multi')
   const [stake, setStake] = useState(1000)
@@ -72,7 +75,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
       <header className={cn('flex items-center justify-between rounded-t-xl bg-brand px-4 py-3', headerClassName)}>
         <h2 id="betslip-title" className="flex items-center gap-2 font-extrabold">
           <Ticket className="size-4" aria-hidden="true" />
-          Bet slip
+          {t('slip.title')}
           <span className="rounded-full bg-primary px-2 text-xs leading-5">{selections.length}</span>
         </h2>
         {selections.length > 0 && (
@@ -82,7 +85,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             className="flex items-center gap-1 text-xs text-foreground/80 hover:text-foreground"
           >
             <Trash2 className="size-3.5" aria-hidden="true" />
-            Clear all
+            {t('slip.clear')}
           </button>
         )}
       </header>
@@ -100,7 +103,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             {feedback.text}
             {feedback.ok && (
               <Link href="/my-bets" className="ml-auto underline underline-offset-2">
-                View
+                {t('slip.view')}
               </Link>
             )}
           </p>
@@ -109,10 +112,13 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
       )}
 
       {selections.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-          <Ticket className="size-8 text-muted-foreground" aria-hidden="true" />
-          <p className="font-bold">Your bet slip is empty</p>
-          <p className="text-sm text-muted-foreground">Tap any odds to add a selection. Add 3+ to start climbing the Boost Ladder.</p>
+        <div className="flex flex-col gap-5 p-4">
+          <div className="flex flex-col items-center gap-2 pt-4 text-center">
+            <Ticket className="size-8 text-muted-foreground" aria-hidden="true" />
+            <p className="font-bold">{t('slip.emptyTitle')}</p>
+            <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{t('slip.emptyBody')}</p>
+          </div>
+          <BookingCodeInput className="border-t border-border pt-4" />
         </div>
       ) : (
         <>
@@ -131,13 +137,13 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
                     effectiveMode === m ? 'bg-brand text-foreground' : 'text-muted-foreground',
                   )}
                 >
-                  {m === 'single' ? 'Singles' : 'Multiple'}
+                  {m === 'single' ? t('slip.singles') : t('slip.multiple')}
                 </button>
               ))}
             </div>
           )}
           {hasBoost && selections.length > 1 && (
-            <p className="mx-3 mt-2 text-xs text-muted-foreground">Boosted odds can only be placed as singles.</p>
+            <p className="mx-3 mt-2 text-xs text-muted-foreground">{t('slip.boostSinglesOnly')}</p>
           )}
 
           <ul className="flex max-h-[36vh] flex-col gap-2 overflow-y-auto p-3">
@@ -168,7 +174,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
                   type="button"
                   onClick={() => remove(s.key)}
                   className="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:bg-surface hover:text-foreground"
-                  aria-label={`Remove ${s.pickLabel}`}
+                  aria-label={`${t('slip.remove')} ${s.pickLabel}`}
                 >
                   <X className="size-4" aria-hidden="true" />
                 </button>
@@ -180,7 +186,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             {effectiveMode === 'multi' && <BoostLadder legs={selections.length} extraWin={boostExtra} />}
 
             <label className="flex flex-col gap-1 text-xs font-semibold text-muted-foreground">
-              {effectiveMode === 'single' && selections.length > 1 ? 'Stake per bet (FCFA)' : 'Stake (FCFA)'}
+              {effectiveMode === 'single' && selections.length > 1 ? t('slip.stakePer') : t('slip.stake')}
               <input
                 type="number"
                 inputMode="numeric"
@@ -207,29 +213,29 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             <dl className="flex flex-col gap-1 text-sm">
               {effectiveMode === 'multi' && (
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Total odds</dt>
+                  <dt className="text-muted-foreground">{t('slip.totalOdds')}</dt>
                   <dd className="font-bold">{formatOdds(totalOdds)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Total stake</dt>
+                <dt className="text-muted-foreground">{t('slip.totalStake')}</dt>
                 <dd className="font-bold">{formatMoney(totalStake)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Potential win</dt>
+                <dt className="text-muted-foreground">{t('slip.potentialWin')}</dt>
                 <dd className="text-base font-extrabold text-success">{formatMoney(potential)}</dd>
               </div>
             </dl>
 
             {remainingToday !== null && (
               <p className={cn('text-xs', overLimit ? 'font-bold text-destructive' : 'text-muted-foreground')}>
-                Daily limit: {formatMoney(remainingToday)} left today
+                {t('slip.limitLeft', { amount: formatMoney(remainingToday) })}
               </p>
             )}
 
             {!isAuthed ? (
               <Link href="/sign-in" className={buttonVariants({ size: 'lg', className: 'h-11 w-full text-base font-extrabold' })}>
-                Log in to place bet
+                {t('slip.loginToBet')}
               </Link>
             ) : shortfall > 0 && !overLimit ? (
               <SlipTopUp shortfall={shortfall} onPaid={place} />
@@ -240,7 +246,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
                 disabled={pending || stake < STAKE_MIN || overLimit}
                 className="h-11 w-full text-base font-extrabold"
               >
-                {pending ? 'Placing bet...' : `Place bet · ${formatMoney(totalStake)}`}
+                {pending ? t('slip.placing') : t('slip.place', { amount: formatMoney(totalStake) })}
               </Button>
             )}
 
@@ -249,9 +255,9 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             <p className="flex items-center gap-1.5 border-t border-border pt-3 text-[11px] text-muted-foreground">
               <ShieldCheck className="size-3.5 shrink-0 text-success" aria-hidden="true" />
               <span>
-                18+ · Withdraw to MoMo anytime ·{' '}
+                {t('slip.safety')} ·{' '}
                 <Link href="/account?tab=limits" className="underline underline-offset-2 hover:text-foreground">
-                  {limitStatus?.limit != null ? 'Manage limit' : 'Set a daily limit'}
+                  {limitStatus?.limit != null ? t('slip.manageLimit') : t('slip.setLimit')}
                 </Link>
               </span>
             </p>

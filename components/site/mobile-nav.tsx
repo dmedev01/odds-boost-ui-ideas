@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { BetSlipPanel } from '@/components/betslip/betslip-panel'
 import { useBetSlip } from '@/components/betslip/betslip-provider'
+import { useI18n } from '@/components/i18n/i18n-provider'
 import { cn } from '@/lib/utils'
 import { isActive, MOBILE_NAV } from './nav-items'
 
@@ -13,6 +14,7 @@ export function MobileNav() {
   const pathname = usePathname()
   const search = useSearchParams().toString()
   const { keys, mobileOpen, setMobileOpen } = useBetSlip()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -37,18 +39,18 @@ export function MobileNav() {
             <span className="flex size-6 items-center justify-center rounded-full bg-white text-sm text-primary">
               {keys.length}
             </span>
-            Open bet slip
+            {t('slip.open')}
           </span>
-          <span className="text-sm">Place bet</span>
+          <span className="text-sm">{t('slip.placeShort')}</span>
         </button>
       )}
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end xl:hidden" role="dialog" aria-modal="true" aria-label="Bet slip">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end xl:hidden" role="dialog" aria-modal="true" aria-label={t('slip.title')}>
           <button
             type="button"
             className="absolute inset-0 bg-black/60"
-            aria-label="Close bet slip"
+            aria-label={t('slip.close')}
             onClick={() => setMobileOpen(false)}
           />
           <div className="relative max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface">
@@ -56,7 +58,7 @@ export function MobileNav() {
               type="button"
               onClick={() => setMobileOpen(false)}
               className="absolute right-3 top-2.5 z-10 rounded-full bg-black/20 p-1.5"
-              aria-label="Close bet slip"
+              aria-label={t('slip.close')}
             >
               <X className="size-4" aria-hidden="true" />
             </button>
@@ -84,7 +86,7 @@ export function MobileNav() {
                   )}
                 >
                   <Icon className="size-5" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </li>
             )

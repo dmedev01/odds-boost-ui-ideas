@@ -75,6 +75,12 @@ export const bets = pgTable('bets', {
   createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const bookingCodes = pgTable('booking_codes', {
+  code: text('code').primaryKey(),
+  selections: jsonb('selections').notNull(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
   userId: text('userId').notNull(),

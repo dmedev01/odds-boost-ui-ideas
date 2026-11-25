@@ -1,23 +1,32 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getBookingKeys } from '@/app/actions/booking'
 import { LoadSlipButton } from '@/components/betslip/load-slip-button'
 import { currentBucket } from '@/lib/data/live'
 import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import { bookingCode, decodeSlip } from '@/lib/share'
+
+async function resolveCode(raw: string) {
+  const upper = raw.toUpperCase()
+  const stored = await getBookingKeys(upper)
+  if (stored) return { keys: stored, label: upper }
+  return { keys: decodeSlip(raw), label: bookingCode(raw) }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params
-  const count = decodeSlip(code).length
+  const [{ keys, label }, { t }] = await Promise.all([resolveCode(code), getT()])
   return {
-    title: `Shared slip ${bookingCode(code)}`,
-    description: `A friend shared a ${count}-pick bet slip. Open it and add it to your slip in one tap.`,
+    title: t('shared.eyebrow', { code: label }),
+    description: t('shared.title', { count: keys.length, odds: '' }).trim(),
   }
 }
 
 export default async function SharedSlipPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
-  const keys = decodeSlip(code)
+  const [{ keys, label }, { t }] = await Promise.all([resolveCode(code), getT()])
   const bucket = currentBucket()
   const selections = keys.map((k) => resolveSelection(k, bucket)).filter((s) => s !== null)
   if (selections.length === 0) notFound()
@@ -27,11 +36,11 @@ export default async function SharedSlipPage({ params }: { params: Promise<{ cod
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4">
       <header className="flex flex-col gap-1 rounded-xl bg-brand p-5">
-        <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Shared slip · {bookingCode(code)}</p>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-primary">{t('shared.eyebrow', { code: label })}</p>
         <h1 className="text-balance text-2xl font-black">
-          {selections.length} {selections.length === 1 ? 'pick' : 'picks'} at {formatOdds(totalOdds)}
+          {t('shared.title', { count: selections.length, odds: formatOdds(totalOdds) })}
         </h1>
-        <p className="text-sm leading-relaxed text-foreground/80">Odds below are today&apos;s live prices, not the ones your friend saw.</p>
+        <p className="text-sm leading-relaxed text-foreground/80">{t('shared.note')}</p>
       </header>
 
       <ul className="flex flex-col overflow-hidden rounded-xl bg-surface">

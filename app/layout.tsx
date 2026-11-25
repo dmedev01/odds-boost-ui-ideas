@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Nunito } from 'next/font/google'
+import { getLocale } from '@/lib/i18n/server'
 import './globals.css'
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito', display: 'swap' })
@@ -30,13 +31,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
   return (
-    <html lang="en" className={`${nunito.variable} bg-background`}>
+    <html lang={locale} className={`${nunito.variable} bg-background`}>
       <body className="antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

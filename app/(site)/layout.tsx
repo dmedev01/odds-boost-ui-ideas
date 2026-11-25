@@ -8,21 +8,25 @@ import { MobileNav } from '@/components/site/mobile-nav'
 import { SiteFooter } from '@/components/site/site-footer'
 import { SiteHeader } from '@/components/site/site-header'
 import { SportsSidebar } from '@/components/site/sports-sidebar'
+import { I18nProvider } from '@/components/i18n/i18n-provider'
 import { currentBucket } from '@/lib/data/live'
+import { getLocale } from '@/lib/i18n/server'
 import { getSession } from '@/lib/session'
 import { ensureWallet, getLimitStatus } from '@/lib/wallet'
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
   const userId = session?.user?.id
-  const [wallet, limitStatus, cookieStore] = await Promise.all([
+  const [wallet, limitStatus, cookieStore, locale] = await Promise.all([
     userId ? ensureWallet(userId) : null,
     userId ? getLimitStatus(userId) : null,
     cookies(),
+    getLocale(),
   ])
   const lite = cookieStore.get(LITE_COOKIE)?.value === '1'
 
   return (
+    <I18nProvider locale={locale}>
     <LiteModeProvider initialLite={lite}>
       <LiveClockProvider initialBucket={currentBucket()}>
         <BetSlipProvider
@@ -52,5 +56,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         </BetSlipProvider>
       </LiveClockProvider>
     </LiteModeProvider>
+    </I18nProvider>
   )
 }
