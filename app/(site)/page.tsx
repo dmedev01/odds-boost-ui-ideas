@@ -19,6 +19,7 @@ const PRODUCTS = [
 export default function HomePage() {
   const live = MATCHES.filter((m) => m.live)
   const upcoming = MATCHES.filter((m) => !m.live && m.sport === 'football').slice(0, 6)
+  const hero = [...BOOSTS].sort((a, b) => b.odds / b.was - a.odds / a.was)[0]
 
   return (
     <div className="flex flex-col gap-5">
@@ -32,11 +33,23 @@ export default function HomePage() {
           className="object-cover object-left opacity-70"
         />
         <div className="relative ml-auto flex min-h-56 max-w-md flex-col justify-center gap-3 bg-gradient-to-l from-brand via-brand/85 to-transparent p-6 md:min-h-72 md:p-8">
-          <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Champions League tonight</p>
-          <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">
-            PSG to win & BTTS boosted to <span className="text-boost">7.50</span>
-          </h1>
-          <p className="text-sm leading-relaxed text-white/80">Was 4.75. Max stake 25 000 FCFA.</p>
+          {hero ? (
+            <>
+              <p className="text-xs font-extrabold uppercase tracking-widest text-primary">
+                {hero.detail.split(' · ')[1]} · {hero.endsIn}
+              </p>
+              <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">
+                {hero.title} boosted to <span className="text-boost">{hero.odds.toFixed(2)}</span>
+              </h1>
+              <p className="text-sm leading-relaxed text-white/80">
+                {hero.detail.split(' · ')[0]}. Was {hero.was.toFixed(2)}. Max stake {formatMoney(hero.maxStake)}.
+              </p>
+            </>
+          ) : (
+            <h1 className="text-balance text-3xl font-black leading-tight md:text-4xl">
+              Boosted odds on every big match
+            </h1>
+          )}
           <div className="flex gap-2">
             <Link href="/boosts" className={buttonVariants({ size: 'lg', className: 'font-extrabold' })}>
               Bet the boost

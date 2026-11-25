@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Flame, Trophy } from 'lucide-react'
-import { MATCHES, SPORTS } from '@/lib/data/sports'
+import { MAJOR_TOURNAMENTS, MATCHES, SPORTS } from '@/lib/data/sports'
 import { cn } from '@/lib/utils'
 
-const TOP_LEAGUES = ['Champions League', 'Premier League', 'LaLiga', 'Serie A', 'Elite One', 'NBA']
+const LEAGUES_WITH_MATCHES = new Set(MATCHES.map((m) => m.league))
+const TOP_LEAGUES = [...new Set(MAJOR_TOURNAMENTS)].filter((l) => LEAGUES_WITH_MATCHES.has(l)).slice(0, 10)
 
 export function SportsSidebar({ className }: { className?: string }) {
   return (
@@ -33,9 +34,7 @@ export function SportsSidebar({ className }: { className?: string }) {
                   className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold hover:bg-accent"
                 >
                   {sport.name}
-                  <span className="text-xs text-muted-foreground">
-                    {MATCHES.filter((m) => m.sport === sport.id).length}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{sport.count}</span>
                 </Link>
               </li>
             ))}

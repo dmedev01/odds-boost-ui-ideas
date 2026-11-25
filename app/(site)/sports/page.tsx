@@ -19,11 +19,17 @@ export default async function SportsPage({
   const matches = MATCHES.filter(
     (m) => (!sportId || m.sport === sportId) && (!league || m.league === league) && (!liveOnly || m.live),
   )
-  const leagues = [...new Set(matches.map((m) => m.league))]
+  const groupKey = (m: (typeof matches)[number]) => `${m.country}|${m.league}`
+  const groups = [...new Set(matches.map(groupKey))].map((key) => {
+    const items = matches.filter((m) => groupKey(m) === key)
+    const sameName = new Set(matches.filter((m) => m.league === items[0].league).map((m) => m.country)).size > 1
+    const title = sameName && items[0].country ? `${items[0].country} · ${items[0].league}` : items[0].league
+    return { key, title, items }
+  })
 
   const tabs = [
     { label: 'All', href: liveOnly ? '/sports?live=1' : '/sports', active: !sportId },
-    ...SPORTS.map((s) => ({
+    ...SPORTS.filter((s) => s.playable).map((s) => ({
       label: s.name,
       href: `/sports?sport=${s.id}${liveOnly ? '&live=1' : ''}`,
       active: sportId === s.id,
@@ -53,14 +59,12 @@ export default async function SportsPage({
 
       <PromoSlot placement="sports" />
 
-      {leagues.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="rounded-xl bg-surface p-8 text-center text-sm text-muted-foreground">
           No events match this filter right now.
         </p>
       ) : (
-        leagues.map((l) => (
-          <MatchList key={l} title={l} matches={matches.filter((m) => m.league === l)} />
-        ))
+        groups.map((g) => <MatchList key={g.key} title={g.title} matches={g.items} />)
       )}
     </div>
   )
