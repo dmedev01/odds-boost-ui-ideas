@@ -1,6 +1,6 @@
 import {
   Dices,
-  Flame,
+  Zap,
   Gift,
   Home,
   Radio,
@@ -24,7 +24,7 @@ export interface NavItem {
 const HOME: NavItem = { href: '/', labelKey: 'nav.home', icon: Home, match: (p) => p === '/' }
 const SPORTS: NavItem = { href: '/sports', labelKey: 'nav.sports', icon: Volleyball, match: (p, s) => p === '/sports' && !s.includes('live=1') }
 const LIVE: NavItem = { href: '/sports?live=1', labelKey: 'nav.live', icon: Radio, match: (p, s) => p === '/sports' && s.includes('live=1') }
-const BOOSTS: NavItem = { href: '/boosts', labelKey: 'nav.boosts', icon: Flame }
+const BOOSTS: NavItem = { href: '/boosts', labelKey: 'nav.boosts', icon: Zap }
 const JACKPOT: NavItem = { href: '/jackpot', labelKey: 'nav.jackpot', icon: Trophy }
 const HIPPIQUE: NavItem = { href: '/hippique', labelKey: 'nav.hippique', icon: HorseIcon }
 const VIRTUALS: NavItem = { href: '/virtuals', labelKey: 'nav.virtuals', icon: Rocket }

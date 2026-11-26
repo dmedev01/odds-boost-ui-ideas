@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowDown, ArrowUp, Flame } from 'lucide-react'
+import { ArrowDown, ArrowUp, Zap } from 'lucide-react'
 import { useLiveBucket } from '@/components/live/live-clock'
 import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
@@ -45,7 +45,8 @@ export function OddsButton({
       aria-label={`${ariaLabel} at ${formatOdds(current)}`}
       onClick={() => toggle(selectionKey)}
       className={cn(
-        'flex min-h-10 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-md px-2 text-sm font-extrabold transition-colors',
+        'relative flex min-h-10 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-md px-2 text-sm font-extrabold transition-colors',
+        boosted && 'pr-4',
         active
           ? 'bg-primary text-primary-foreground'
           : boosted
@@ -54,6 +55,14 @@ export function OddsButton({
         className,
       )}
     >
+      {boosted && (
+        <span
+          aria-hidden="true"
+          className="absolute -right-1.5 -top-2 grid size-5 place-items-center rounded-full bg-boost text-boost-foreground ring-2 ring-surface"
+        >
+          <Zap className="size-3 fill-current" />
+        </span>
+      )}
       {label && (
         <span
           className={cn(
@@ -61,7 +70,6 @@ export function OddsButton({
             active ? 'text-primary-foreground/80' : boosted ? 'text-boost' : 'text-muted-foreground',
           )}
         >
-          {boosted && <Flame className="size-3" aria-hidden="true" />}
           {label}
         </span>
       )}

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Flame, Trophy } from 'lucide-react'
+import { Zap, Trophy } from 'lucide-react'
 import { MAJOR_TOURNAMENTS, MATCHES, SPORTS } from '@/lib/data/sports'
 import { isProductEnabled } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
@@ -16,7 +16,7 @@ export function SportsSidebar({ className }: { className?: string }) {
             href="/boosts"
             className="flex items-center gap-2 rounded-lg bg-boost/15 px-3 py-2 text-sm font-extrabold text-boost hover:bg-boost/25"
           >
-            <Flame className="size-4" aria-hidden="true" />
+            <Zap className="size-4" aria-hidden="true" />
             Odds Boosts
           </Link>
           {isProductEnabled('jackpot') && (

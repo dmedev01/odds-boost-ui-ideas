@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { CheckCircle2, Flame, ShieldCheck, Ticket, Trash2, X } from 'lucide-react'
+import { CheckCircle2, Zap, ShieldCheck, Ticket, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { useLiveBucket } from '@/components/live/live-clock'
 import { placeSportsBet } from '@/app/actions/bets'
@@ -154,7 +154,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
               >
                 {s.market === 'BOOST' && (
                   <span className="mb-1 inline-flex items-center gap-1 rounded bg-boost px-1.5 text-[10px] font-extrabold uppercase text-boost-foreground">
-                    <Flame className="size-3" aria-hidden="true" />
+                    <Zap className="size-3" aria-hidden="true" />
                     {s.marketLabel}
                   </span>
                 )}
