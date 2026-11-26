@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Flame, Trophy } from 'lucide-react'
 import { MAJOR_TOURNAMENTS, MATCHES, SPORTS } from '@/lib/data/sports'
+import { isProductEnabled } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
 
 const LEAGUES_WITH_MATCHES = new Set(MATCHES.map((m) => m.league))
@@ -18,10 +19,12 @@ export function SportsSidebar({ className }: { className?: string }) {
             <Flame className="size-4" aria-hidden="true" />
             Odds Boosts
           </Link>
-          <Link href="/jackpot" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold hover:bg-accent">
-            <Trophy className="size-4 text-primary" aria-hidden="true" />
-            Mega Jackpot
-          </Link>
+          {isProductEnabled('jackpot') && (
+            <Link href="/jackpot" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold hover:bg-accent">
+              <Trophy className="size-4 text-primary" aria-hidden="true" />
+              Mega Jackpot
+            </Link>
+          )}
         </div>
 
         <nav aria-label="Sports" className="rounded-xl bg-surface p-2">

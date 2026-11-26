@@ -1,14 +1,17 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { JackpotBoard } from '@/components/jackpot/jackpot-board'
 import { PageHeader } from '@/components/site/page-header'
 import { PromoSlot } from '@/components/site/promo-slot'
 import { JACKPOT } from '@/lib/data/jackpot'
 import { formatMoney } from '@/lib/format'
 import { getSession } from '@/lib/session'
+import { isProductEnabled } from '@/lib/site-config'
 
 export const metadata: Metadata = { title: 'Mega Jackpot' }
 
 export default async function JackpotPage() {
+  if (!isProductEnabled('jackpot')) notFound()
   const session = await getSession()
 
   return (

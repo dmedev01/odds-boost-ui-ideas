@@ -4,6 +4,7 @@ import { Check } from 'lucide-react'
 import { PageHeader } from '@/components/site/page-header'
 import { buttonVariants } from '@/components/ui/button'
 import { PROMOTIONS } from '@/lib/data/catalog'
+import { isHrefEnabled } from '@/lib/site-config'
 
 export const metadata: Metadata = { title: 'Promotions' }
 
@@ -16,7 +17,7 @@ export default function PromotionsPage() {
         description="Welcome bonus, daily boosts, accumulator rewards, cashback and more. Terms apply to every offer."
       />
       <ul className="grid gap-3 md:grid-cols-2">
-        {PROMOTIONS.map((p) => (
+        {PROMOTIONS.filter((p) => isHrefEnabled(p.cta.href)).map((p) => (
           <li key={p.id} className="flex flex-col gap-3 rounded-xl bg-surface p-5">
             <span className="w-fit rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-primary">
               {p.badge}

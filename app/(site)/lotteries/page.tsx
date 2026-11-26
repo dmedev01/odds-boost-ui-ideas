@@ -1,14 +1,17 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { DrawPicker } from '@/components/lotteries/draw-picker'
 import { InstantCard } from '@/components/lotteries/instant-card'
 import { PageHeader } from '@/components/site/page-header'
 import { PromoSlot } from '@/components/site/promo-slot'
 import { DRAW_LOTTERIES, INSTANT_GAMES } from '@/lib/data/lotteries'
 import { getSession } from '@/lib/session'
+import { isProductEnabled } from '@/lib/site-config'
 
 export const metadata: Metadata = { title: 'Lotteries' }
 
 export default async function LotteriesPage() {
+  if (!isProductEnabled('lotteries')) notFound()
   const session = await getSession()
   const isAuthed = Boolean(session?.user)
 

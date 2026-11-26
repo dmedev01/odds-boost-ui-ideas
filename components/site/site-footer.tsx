@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import { isHrefEnabled } from '@/lib/site-config'
 import { Logo } from './logo'
 
-const COLUMNS = [
+const ALL_COLUMNS = [
   {
     title: 'Betting',
     links: [
@@ -30,6 +31,10 @@ const COLUMNS = [
     ],
   },
 ]
+
+const COLUMNS = ALL_COLUMNS.map((c) => ({ ...c, links: c.links.filter((l) => isHrefEnabled(l.href)) })).filter(
+  (c) => c.links.length > 0,
+)
 
 export function SiteFooter() {
   return (

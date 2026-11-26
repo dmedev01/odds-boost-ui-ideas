@@ -1,15 +1,18 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { Clock } from 'lucide-react'
 import { PageHeader } from '@/components/site/page-header'
 import { PromoSlot } from '@/components/site/promo-slot'
 import { RocketCrash } from '@/components/virtuals/rocket-crash'
 import { VIRTUAL_GAMES } from '@/lib/data/catalog'
+import { isProductEnabled } from '@/lib/site-config'
 
 export const metadata: Metadata = { title: 'Virtuals & crash games' }
 
 const CATEGORIES = ['Crash', 'Virtual Sports', 'Instant Win'] as const
 
 export default function VirtualsPage() {
+  if (!isProductEnabled('virtuals')) notFound()
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
