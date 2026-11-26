@@ -188,6 +188,14 @@ export function getBoost(id: string) {
   return BOOSTS.find((b) => b.id === id)
 }
 
+const boostBySlot = new Map(BOOSTS.map((b) => [`${b.matchId}|${b.slot}`, b]))
+
+/** The active boost on one outcome of a match, so regular market rows can show it in place. */
+export function boostFor(matchId: string, slot: '1' | 'X' | '2') {
+  const boost = boostBySlot.get(`${matchId}|${slot}`)
+  return boost && boost.endsAt > Date.now() ? boost : undefined
+}
+
 export const ACCA_BOOST_TIERS = [
   { legs: 3, pct: 5 },
   { legs: 5, pct: 10 },

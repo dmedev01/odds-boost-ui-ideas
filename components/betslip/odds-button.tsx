@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, Flame } from 'lucide-react'
 import { useLiveBucket } from '@/components/live/live-clock'
 import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
@@ -55,13 +55,24 @@ export function OddsButton({
       )}
     >
       {label && (
-        <span className={cn('shrink-0 text-xs font-bold', active ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+        <span
+          className={cn(
+            'flex shrink-0 items-center gap-0.5 text-xs font-bold',
+            active ? 'text-primary-foreground/80' : boosted ? 'text-boost' : 'text-muted-foreground',
+          )}
+        >
+          {boosted && <Flame className="size-3" aria-hidden="true" />}
           {label}
         </span>
       )}
-      <span className="ml-auto flex min-w-0 items-center gap-0.5">
+      <span className={cn('ml-auto flex min-w-0 items-center gap-0.5', boosted && 'flex-col items-end gap-0 leading-none')}>
         {boosted && (
-          <span className={cn('text-xs font-semibold line-through', active ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+          <span
+            className={cn(
+              'text-[10px] font-semibold leading-none line-through',
+              active ? 'text-primary-foreground/70' : 'text-muted-foreground',
+            )}
+          >
             {formatOdds(was)}
           </span>
         )}

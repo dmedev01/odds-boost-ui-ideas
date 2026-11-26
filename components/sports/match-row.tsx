@@ -1,7 +1,7 @@
 import { OddsButton } from '@/components/betslip/odds-button'
 import { MomentumBar } from '@/components/live/momentum-bar'
 import { selectionKey } from '@/lib/data/selections'
-import type { Match } from '@/lib/data/sports'
+import { boostFor, type Match } from '@/lib/data/sports'
 
 export function MatchRow({ match }: { match: Match }) {
   const picks = (['1', 'X', '2'] as const).filter((p) => match.odds[p] !== undefined)
@@ -46,16 +46,29 @@ export function MatchRow({ match }: { match: Match }) {
         </div>
       )}
       <div className="flex gap-1.5 md:w-[340px]">
-        {picks.map((p) => (
-          <OddsButton
-            key={p}
-            selectionKey={selectionKey(match.id, '1X2', p)}
-            odds={match.odds[p]!}
-            label={p}
-            live={Boolean(match.live)}
-            ariaLabel={`${event}: ${p === '1' ? match.home : p === '2' ? match.away : 'Draw'}`}
-          />
-        ))}
+        {picks.map((p) => {
+          const boost = boostFor(match.id, p)
+          const pickName = p === '1' ? match.home : p === '2' ? match.away : 'Draw'
+          return boost ? (
+            <OddsButton
+              key={p}
+              selectionKey={selectionKey(match.id, 'BOOST', boost.id)}
+              odds={boost.odds}
+              was={boost.was}
+              label={p}
+              ariaLabel={`${event}: ${pickName}, boosted from ${boost.was}`}
+            />
+          ) : (
+            <OddsButton
+              key={p}
+              selectionKey={selectionKey(match.id, '1X2', p)}
+              odds={match.odds[p]!}
+              label={p}
+              live={Boolean(match.live)}
+              ariaLabel={`${event}: ${pickName}`}
+            />
+          )
+        })}
         {match.ou && (
           <OddsButton
             selectionKey={selectionKey(match.id, 'OU', 'O')}
