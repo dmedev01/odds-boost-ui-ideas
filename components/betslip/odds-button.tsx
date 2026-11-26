@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowDown, ArrowUp, Zap } from 'lucide-react'
+import { ArrowDown, ArrowUp } from 'lucide-react'
+import { BoltIcon } from '@/components/site/bolt-icon'
 import { useLiveBucket } from '@/components/live/live-clock'
 import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
@@ -60,7 +61,7 @@ export function OddsButton({
           aria-hidden="true"
           className="absolute -right-1.5 -top-2 grid size-5 place-items-center rounded-full bg-boost text-boost-foreground ring-2 ring-surface"
         >
-          <Zap className="size-3 fill-current" />
+          <BoltIcon className="size-3 fill-current" />
         </span>
       )}
       {label && (

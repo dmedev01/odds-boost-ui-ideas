@@ -1,6 +1,7 @@
 'use client'
 
-import { Clock, Zap } from 'lucide-react'
+import { Clock } from 'lucide-react'
+import { BoltIcon } from '@/components/site/bolt-icon'
 import { OddsButton } from '@/components/betslip/odds-button'
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { selectionKey } from '@/lib/data/selections'
@@ -28,7 +29,7 @@ export function BoostCard({ boost, className }: { boost: Boost; className?: stri
             superBoost ? 'bg-boost text-boost-foreground' : 'bg-boost/15 text-boost',
           )}
         >
-          <Zap className="size-3" aria-hidden="true" />
+          <BoltIcon className="size-3" aria-hidden="true" />
           {t(superBoost ? 'boost.super' : 'boost.daily')}
         </span>
         <span className="text-xs font-extrabold text-success">{t('boost.pct', { pct })}</span>

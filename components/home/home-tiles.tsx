@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Dices, Zap, Radio, Rocket, Trophy } from 'lucide-react'
+import { Dices, Radio, Rocket, Trophy } from 'lucide-react'
+import { BoltIcon } from '@/components/site/bolt-icon'
 import { HorseIcon } from '@/components/site/horse-icon'
 import { JACKPOT } from '@/lib/data/jackpot'
 import { formatMoney } from '@/lib/format'
@@ -25,7 +26,7 @@ function describe(tile: HomeTile, t: T) {
     case 'live':
       return { href: '/sports?live=1', label: t('nav.live'), sub: t('home.liveCount', { n: tile.count }), Icon: Radio }
     case 'boosts':
-      return { href: '/boosts', label: t('nav.boosts'), sub: t('home.boostsCount', { n: tile.count }), Icon: Zap }
+      return { href: '/boosts', label: t('nav.boosts'), sub: t('home.boostsCount', { n: tile.count }), Icon: BoltIcon }
     case 'league':
       return {
         href: `/sports?league=${encodeURIComponent(tile.league)}`,
