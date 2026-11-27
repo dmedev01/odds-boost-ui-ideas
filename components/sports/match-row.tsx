@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { OddsButton } from '@/components/betslip/odds-button'
 import { MomentumBar } from '@/components/live/momentum-bar'
 import { selectionKey } from '@/lib/data/selections'
@@ -6,6 +8,7 @@ import { boostFor, type Match } from '@/lib/data/sports'
 export function MatchRow({ match }: { match: Match }) {
   const picks = (['1', 'X', '2'] as const).filter((p) => match.odds[p] !== undefined)
   const event = `${match.home} vs ${match.away}`
+  const eventHref = `/event/${match.id}`
 
   return (
     <li className="flex flex-col gap-2 border-b border-border px-3 py-3 last:border-0 md:flex-row md:items-center md:gap-4">
@@ -29,16 +32,25 @@ export function MatchRow({ match }: { match: Match }) {
               <MomentumBar matchId={match.id} home={match.home} away={match.away} />
             </div>
           )}
-          <span className="flex justify-between gap-2">
-            <span className="truncate">{match.home}</span>
-            {match.live && <span className="text-primary">{match.live.score[0]}</span>}
-          </span>
-          <span className="flex justify-between gap-2">
-            <span className="truncate">{match.away}</span>
-            {match.live && <span className="text-primary">{match.live.score[1]}</span>}
-          </span>
+          <Link href={eventHref} className="flex flex-col gap-0.5 hover:text-primary">
+            <span className="flex justify-between gap-2">
+              <span className="truncate">{match.home}</span>
+              {match.live && <span className="text-primary">{match.live.score[0]}</span>}
+            </span>
+            <span className="flex justify-between gap-2">
+              <span className="truncate">{match.away}</span>
+              {match.live && <span className="text-primary">{match.live.score[1]}</span>}
+            </span>
+          </Link>
         </div>
-        <span className="hidden shrink-0 text-xs font-semibold text-muted-foreground md:block">+{match.markets}</span>
+        <Link
+          href={eventHref}
+          aria-label={`All ${match.markets} markets for ${event}`}
+          className="flex min-h-10 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-xs font-bold text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+        >
+          +{match.markets}
+          <ChevronRight className="size-3.5" aria-hidden="true" />
+        </Link>
       </div>
       {match.live && (
         <div className="md:hidden">

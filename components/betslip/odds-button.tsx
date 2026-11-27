@@ -67,7 +67,7 @@ export function OddsButton({
       {label && (
         <span
           className={cn(
-            'flex shrink-0 items-center gap-0.5 text-xs font-bold',
+            'min-w-0 truncate text-xs font-bold',
             active ? 'text-primary-foreground/80' : boosted ? 'text-boost' : 'text-muted-foreground',
           )}
         >
