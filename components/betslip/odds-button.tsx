@@ -16,6 +16,7 @@ export function OddsButton({
   ariaLabel,
   was,
   live,
+  stacked,
   className,
 }: {
   selectionKey: string
@@ -24,6 +25,8 @@ export function OddsButton({
   ariaLabel: string
   was?: number
   live?: boolean
+  /** Put the label above the price on phones, for narrow multi-column rows. */
+  stacked?: boolean
   className?: string
 }) {
   const { has, toggle } = useBetSlip()
@@ -46,8 +49,9 @@ export function OddsButton({
       aria-label={`${ariaLabel} at ${formatOdds(current)}`}
       onClick={() => toggle(selectionKey)}
       className={cn(
-        'relative flex min-h-10 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-md px-2 text-sm font-extrabold transition-colors',
+        'relative flex min-h-10 min-w-0 flex-1 items-center justify-between gap-1.5 rounded-md px-2 py-1 text-sm font-extrabold transition-colors',
         boosted && 'pr-4',
+        stacked && label && 'flex-col items-start justify-center gap-0.5 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-1.5 sm:py-1',
         active
           ? 'bg-primary text-primary-foreground'
           : boosted
@@ -67,14 +71,14 @@ export function OddsButton({
       {label && (
         <span
           className={cn(
-            'min-w-0 truncate text-xs font-bold',
+            'line-clamp-2 min-w-0 break-words text-left text-xs font-bold leading-tight',
             active ? 'text-primary-foreground/80' : boosted ? 'text-boost' : 'text-muted-foreground',
           )}
         >
           {label}
         </span>
       )}
-      <span className={cn('ml-auto flex min-w-0 items-center gap-0.5', boosted && 'flex-col items-end gap-0 leading-none')}>
+      <span className={cn('ml-auto flex shrink-0 items-center gap-0.5', stacked && label && 'ml-0 sm:ml-auto', boosted && 'flex-col items-end gap-0 leading-none')}>
         {boosted && (
           <span
             className={cn(

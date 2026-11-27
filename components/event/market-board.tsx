@@ -251,6 +251,7 @@ function MarketCard({
                   odds={o.odds}
                   was={o.was}
                   label={o.label}
+                  stacked={market.outcomes.length === 3}
                   live={live && o.was === undefined}
                   ariaLabel={`${event}: ${market.name}, ${o.label}`}
                 />
