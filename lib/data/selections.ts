@@ -1,7 +1,9 @@
 import { currentBucket, liveOdds } from './live'
+import { getMarkets } from './markets'
 import { getBoost, getMatch } from './sports'
 
-export type Market = '1X2' | 'OU' | 'BOOST'
+/** MKT covers every event-page market; its pick is "<marketId>~<outcomeId>". */
+export type Market = '1X2' | 'OU' | 'BOOST' | 'MKT'
 
 export interface ResolvedSelection {
   key: string
@@ -57,6 +59,24 @@ export function resolveSelection(key: string, bucket: number = currentBucket()):
       marketLabel: `Total ${match.ou.line}`,
       pickLabel: `${pick === 'O' ? 'Over' : 'Under'} ${match.ou.line}`,
       odds: price(pick === 'O' ? match.ou.over : match.ou.under),
+      live: isLive,
+    }
+  }
+
+  if (market === 'MKT') {
+    const [marketId, outcomeId] = pick.split('~')
+    const found = getMarkets(match).find((m) => m.id === marketId)
+    const outcome = found?.outcomes.find((o) => o.id === outcomeId)
+    if (!found || !outcome) return null
+    return {
+      key,
+      matchId,
+      market,
+      pick,
+      eventLabel,
+      marketLabel: found.name,
+      pickLabel: outcome.label,
+      odds: price(outcome.odds),
       live: isLive,
     }
   }
