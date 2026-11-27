@@ -84,6 +84,10 @@ const dayKey = (t: number) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
 const clock = (t: number) =>
   new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(t)
 
+export function isToday(t: number, now = Date.now()) {
+  return dayKey(t) === dayKey(now)
+}
+
 export function kickoffLabel(t: number, now = Date.now()) {
   if (dayKey(t) === dayKey(now)) return `Today ${clock(t)}`
   if (dayKey(t) === dayKey(now + 86_400_000)) return `Tomorrow ${clock(t)}`
