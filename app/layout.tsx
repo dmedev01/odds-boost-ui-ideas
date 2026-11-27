@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Nunito } from 'next/font/google'
+import { AppSplash } from '@/components/splash/app-splash'
 import { getLocale } from '@/lib/i18n/server'
 import './globals.css'
 
@@ -40,6 +41,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={`${nunito.variable} bg-background`}>
       <body className="antialiased">
+        <AppSplash />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
