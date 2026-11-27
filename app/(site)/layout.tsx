@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { cookies } from 'next/headers'
+import { AgeNotice } from '@/components/age/age-notice'
 import { SlipRail } from '@/components/betslip/slip-rail'
+import { AGE_COOKIE, MIN_AGE } from '@/lib/age'
 import { BetSlipProvider } from '@/components/betslip/betslip-provider'
 import { LITE_COOKIE, LiteModeProvider } from '@/components/lite/lite-mode'
 import { LiveClockProvider } from '@/components/live/live-clock'
@@ -24,6 +26,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     getLocale(),
   ])
   const lite = cookieStore.get(LITE_COOKIE)?.value === '1'
+  const ageConfirmed = Boolean(userId) || cookieStore.get(AGE_COOKIE)?.value === String(MIN_AGE)
 
   return (
     <I18nProvider locale={locale}>
@@ -48,6 +51,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <SiteFooter />
           <Suspense>
             <MobileNav />
+          </Suspense>
+          <Suspense>
+            <AgeNotice confirmed={ageConfirmed} />
           </Suspense>
         </BetSlipProvider>
       </LiveClockProvider>

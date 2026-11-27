@@ -39,7 +39,7 @@ const en = {
   'slip.loginToBet': 'Log in to place bet',
   'slip.placing': 'Placing bet...',
   'slip.place': 'Place bet · {amount}',
-  'slip.safety': '18+ · Withdraw to MoMo anytime',
+  'slip.safety': '21+ · Withdraw to MoMo anytime',
   'slip.manageLimit': 'Manage limit',
   'slip.setLimit': 'Set a daily limit',
   'slip.open': 'Open bet slip',
@@ -126,6 +126,14 @@ const en = {
   'boosts.acca': 'Accumulator Boost',
   'boosts.accaBody': 'Combine selections in a multiple and your winnings are boosted automatically on the bet slip.',
   'boosts.legs': '{n}+ selections',
+  'age.title': 'Wandabet is for adults {age} and over',
+  'age.body': 'Confirm your age to continue. Betting can be addictive, so play responsibly and only with money you can afford to lose.',
+  'age.confirm': "I'm {age} or older",
+  'age.under': "I'm under {age}",
+  'age.underTitle': "Come back when you're {age}",
+  'age.underBody': "Betting isn't allowed for anyone under {age} in Cameroon. You can still look around, but you can't create an account or place bets.",
+  'age.underHelp': 'If betting is worrying you or a friend, talk to someone you trust.',
+  'age.mistake': 'I made a mistake',
 } as const
 
 export type DictKey = keyof typeof en
@@ -167,7 +175,7 @@ const fr: Dictionary = {
   'slip.loginToBet': 'Connectez-vous pour parier',
   'slip.placing': 'Validation...',
   'slip.place': 'Parier · {amount}',
-  'slip.safety': '18+ · Retrait MoMo à tout moment',
+  'slip.safety': '21+ · Retrait MoMo à tout moment',
   'slip.manageLimit': 'Gérer ma limite',
   'slip.setLimit': 'Fixer une limite journalière',
   'slip.open': 'Ouvrir le coupon',
@@ -254,6 +262,14 @@ const fr: Dictionary = {
   'boosts.acca': 'Boost combiné',
   'boosts.accaBody': 'Combinez vos sélections dans un pari multiple et vos gains sont boostés automatiquement sur le coupon.',
   'boosts.legs': '{n}+ sélections',
+  'age.title': 'Wandabet est réservé aux adultes de {age} ans et plus',
+  'age.body': "Confirmez votre âge pour continuer. Les paris peuvent créer une dépendance : jouez de façon responsable et uniquement avec l'argent que vous pouvez vous permettre de perdre.",
+  'age.confirm': "J'ai {age} ans ou plus",
+  'age.under': "J'ai moins de {age} ans",
+  'age.underTitle': 'Revenez quand vous aurez {age} ans',
+  'age.underBody': "Les paris sont interdits aux moins de {age} ans au Cameroun. Vous pouvez visiter le site, mais pas créer de compte ni parier.",
+  'age.underHelp': "Si les paris vous inquiètent, vous ou un ami, parlez-en à une personne de confiance.",
+  'age.mistake': "Je me suis trompé",
 }
 
 export const DICTIONARIES: Record<Locale, Dictionary> = { en, fr }

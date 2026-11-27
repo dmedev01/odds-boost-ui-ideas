@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MIN_AGE } from '@/lib/age'
 import { isHrefEnabled } from '@/lib/site-config'
 import { Logo } from './logo'
 
@@ -47,7 +48,7 @@ export function SiteFooter() {
             only.
           </p>
           <span className="flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-extrabold">
-            <span className="rounded-full bg-destructive px-1.5 text-[10px]">18+</span>
+            <span className="rounded-full bg-destructive px-1.5 text-[10px]">{MIN_AGE}+</span>
             Responsible gaming
           </span>
         </div>
