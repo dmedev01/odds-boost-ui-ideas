@@ -8,9 +8,30 @@ import { MatchList } from '@/components/sports/match-row'
 import { BOOST_EVENTS, BOOSTS } from '@/lib/data/sports'
 import { planHome } from '@/lib/home-plan'
 import { getT } from '@/lib/i18n/server'
+import {
+  BoostsLoading,
+  DataEmpty,
+  DataError,
+  DataOffline,
+  MatchesLoading,
+  RefreshBar,
+} from '@/components/loading/data-state'
+import { HomeDataPreview, parseHomeDataState } from '@/components/loading/home-data-preview'
+import { HomeSkeleton } from '@/components/loading/home-skeleton'
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ data?: string }> }) {
   const { t } = await getT()
+  const preview = parseHomeDataState((await searchParams).data)
+  if (preview === 'page') {
+    return (
+      <div className="flex flex-col gap-5">
+        <HomeDataPreview current={preview} />
+        <HomeSkeleton />
+      </div>
+    )
+  }
+  const matchesPending = preview === 'loading' || preview === 'slow'
+  const matchesBlocked = preview === 'failed' || preview === 'offline' || preview === 'empty'
   const plan = planHome()
   const topBoosts = [...BOOSTS].sort((a, b) => b.odds / b.was - a.odds / a.was).slice(0, 3)
   const heroEvent = BOOST_EVENTS[0]
@@ -19,6 +40,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-5">
+      {preview && <HomeDataPreview current={preview} />}
       <section className="relative overflow-hidden rounded-xl bg-brand" aria-label={t('home.featured')}>
         <Image
           src="/images/hero-football.png"
@@ -61,7 +83,9 @@ export default async function HomePage() {
 
       <HomeTiles tiles={plan.tiles} t={t} />
 
-      {BOOST_EVENTS.length > 0 && (
+      {matchesPending ? (
+        <BoostsLoading slow={preview === 'slow'} />
+      ) : BOOST_EVENTS.length > 0 && (
         <section aria-labelledby="boosts-heading" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <h2 id="boosts-heading" className="text-lg font-black text-boost">
@@ -79,9 +103,20 @@ export default async function HomePage() {
         </section>
       )}
 
+      {preview === 'refreshing' && <RefreshBar active />}
+      {preview === 'failed' && <DataError subject="matches" />}
+      {preview === 'offline' && <DataOffline subject="matches" />}
+      {preview === 'empty' && <DataEmpty subject="matches" />}
+
       {plan.sections.map((section) =>
         section.kind === 'leagues' ? (
           <LeagueChips key="leagues" leagues={section.leagues} t={t} />
+        ) : matchesBlocked ? null : matchesPending ? (
+          <MatchesLoading
+            key={section.key}
+            title={'key' in section.title ? t(section.title.key) : section.title.text}
+            slow={preview === 'slow'}
+          />
         ) : (
           <MatchList
             key={section.key}
