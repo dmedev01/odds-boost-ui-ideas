@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MatchList } from '@/components/sports/match-row'
-import { PillStrip, Segmented, type StripItem } from '@/components/sports/sport-strip'
+import { LayoutGrid } from 'lucide-react'
+import { SportIcon } from '@/components/sports/sport-icon'
+import { PillStrip, Segmented, SportTileStrip, type SportTileItem, type StripItem } from '@/components/sports/sport-strip'
 import { SportsSearch } from '@/components/sports/sports-search'
 import { PromoSlot } from '@/components/site/promo-slot'
 import { MAJOR_TOURNAMENTS, MATCHES, SPORTS, type Match } from '@/lib/data/sports'
@@ -39,11 +41,18 @@ export default async function SportsPage({
   const activeSport = SPORTS.find((s) => s.id === query.sport)
 
   const perSport = Map.groupBy(filterMatches(query, 'sport'), (m) => m.sport)
-  const sportItems: StripItem[] = [
-    { key: 'all', label: t('sports.all'), href: sportsHref(query, { sport: undefined }), active: !query.sport },
+  const sportItems: SportTileItem[] = [
+    {
+      key: 'all',
+      label: t('sports.all'),
+      icon: <LayoutGrid className="size-5" aria-hidden="true" />,
+      href: sportsHref(query, { sport: undefined }),
+      active: !query.sport,
+    },
     ...SPORTS.map((s) => ({
       key: s.id,
       label: s.name,
+      icon: <SportIcon sportId={s.id} />,
       count: narrowed ? (perSport.get(s.id)?.length ?? 0) : s.count,
       href: sportsHref(query, { sport: s.id }),
       active: query.sport === s.id,
@@ -89,7 +98,10 @@ export default async function SportsPage({
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-balance text-2xl font-black">{title}</h1>
+          <h1 className="flex items-center gap-2.5 text-balance text-2xl font-black">
+            {activeSport && <SportIcon sportId={activeSport.id} size={28} />}
+            {title}
+          </h1>
           {query.league && (
             <Link href={sportsHref(query, { league: undefined })} className="shrink-0 text-sm font-bold text-primary hover:underline">
               {t('sports.allCompetitions')}
@@ -105,7 +117,7 @@ export default async function SportsPage({
             clear: t('sports.clear'),
           }}
         />
-        <PillStrip label={t('sports.sportsNav')} items={sportItems} />
+        <SportTileStrip label={t('sports.sportsNav')} items={sportItems} />
         <Segmented label={t('sports.whenNav')} items={whenItems} />
       </div>
 
