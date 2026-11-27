@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Trophy } from 'lucide-react'
 import { BoltIcon } from '@/components/site/bolt-icon'
 import { MAJOR_TOURNAMENTS, MATCHES, SPORTS } from '@/lib/data/sports'
+import { SportIcon } from '@/components/sports/sport-icon'
 import { isProductEnabled } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
 
@@ -35,9 +36,10 @@ export function SportsSidebar({ className }: { className?: string }) {
               <li key={sport.id}>
                 <Link
                   href={`/sports?sport=${sport.id}`}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-bold hover:bg-accent"
+                  className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold hover:bg-accent"
                 >
-                  {sport.name}
+                  <SportIcon sportId={sport.id} size={18} />
+                  <span className="flex-1 truncate">{sport.name}</span>
                   <span className="text-xs text-muted-foreground">{sport.count}</span>
                 </Link>
               </li>
