@@ -18,6 +18,18 @@ import { BoostLadder } from './boost-ladder'
 import { useBetSlip } from './betslip-provider'
 import { SlipShare } from './slip-share'
 import { SlipTopUp } from './slip-topup'
+import { SlipModeTabs, SystemSizePicker, TicketList } from './slip-modes'
+import {
+  availableModes,
+  buildTickets,
+  capWin,
+  MAX_POTENTIAL_WIN,
+  MAX_TICKETS,
+  type SlipMode,
+  summarizeTickets,
+  systemSizes,
+  ticketCount,
+} from '@/lib/slip-modes'
 
 const QUICK_STAKES = [500, 1000, 2500, 5000]
 
@@ -26,7 +38,8 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
   const router = useRouter()
   const { t } = useI18n()
   const bucket = useLiveBucket()
-  const [mode, setMode] = useState<'single' | 'multi'>('multi')
+  const [mode, setMode] = useState<SlipMode>('multi')
+  const [systemSize, setSystemSize] = useState(2)
   const [stake, setStake] = useState(1000)
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [placed, setPlaced] = useState<{ keys: string[]; odds: number } | null>(null)
@@ -37,15 +50,31 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
     [keys, bucket],
   )
   const hasBoost = selections.some((s) => s.market === 'BOOST')
-  const multiAllowed = selections.length > 1 && !hasBoost
-  const effectiveMode = selections.length <= 1 || !multiAllowed ? 'single' : mode
+  const modes = availableModes(selections)
+  const effectiveMode: SlipMode = modes.includes(mode) ? mode : modes.includes('multi') ? 'multi' : modes[0]
+  const sizes = systemSizes(selections.length)
+  const effectiveSize = sizes.includes(systemSize) ? systemSize : (sizes[0] ?? 2)
+  const isCombo = effectiveMode === 'system' || effectiveMode === 'integral'
+
+  const count = ticketCount(selections, effectiveMode, effectiveSize)
+  const tooManyTickets = count > MAX_TICKETS
+  const tickets = useMemo(
+    () => (isCombo && !tooManyTickets ? buildTickets(selections, effectiveMode, effectiveSize) : []),
+    [isCombo, tooManyTickets, selections, effectiveMode, effectiveSize],
+  )
+  const summary = summarizeTickets(tickets, stake)
 
   const totalOdds = selections.reduce((acc, s) => acc * s.odds, 1)
   const bonusPct = effectiveMode === 'multi' ? accaBoostPct(selections.length) : 0
-  const totalStake = effectiveMode === 'single' ? stake * selections.length : stake
+  const totalStake = stake * count
   const boostExtra = effectiveMode === 'multi' ? ((stake * totalOdds - stake) * bonusPct) / 100 : 0
   const potential =
-    effectiveMode === 'single' ? selections.reduce((sum, s) => sum + stake * s.odds, 0) : stake * totalOdds + boostExtra
+    effectiveMode === 'single'
+      ? selections.reduce((sum, s) => sum + capWin(stake * s.odds), 0)
+      : effectiveMode === 'multi'
+        ? capWin(stake * totalOdds + boostExtra)
+        : summary.sum
+  const shareOdds = isCombo ? summary.maxOdds : totalOdds
 
   const shortfall = isAuthed && balance !== null ? totalStake - balance : 0
   const remainingToday =
@@ -54,10 +83,10 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
 
   async function place() {
     const seenOdds = Object.fromEntries(selections.map((s) => [s.key, s.odds]))
-    const result = await placeSportsBet({ keys, stake, mode: effectiveMode, seenOdds })
+    const result = await placeSportsBet({ keys, stake, mode: effectiveMode, systemSize: effectiveSize, seenOdds })
     if (result.ok) {
       setFeedback({ ok: true, text: result.message })
-      setPlaced({ keys, odds: totalOdds })
+      setPlaced({ keys, odds: shareOdds })
       clear()
       router.refresh()
     } else {
@@ -124,27 +153,23 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
       ) : (
         <>
           {selections.length > 1 && (
-            <div className="mx-3 mt-3 grid grid-cols-2 rounded-lg bg-background p-1 text-sm font-bold" role="tablist">
-              {(['single', 'multi'] as const).map((m) => (
-                <button
-                  key={m}
-                  role="tab"
-                  type="button"
-                  aria-selected={effectiveMode === m}
-                  disabled={m === 'multi' && !multiAllowed}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    'rounded-md py-1.5 transition-colors disabled:opacity-40',
-                    effectiveMode === m ? 'bg-brand text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {m === 'single' ? t('slip.singles') : t('slip.multiple')}
-                </button>
-              ))}
-            </div>
+            <SlipModeTabs
+              modes={hasBoost ? ['single', 'multi'] : modes}
+              active={effectiveMode}
+              disabled={hasBoost ? ['multi'] : []}
+              onChange={setMode}
+            />
           )}
           {hasBoost && selections.length > 1 && (
             <p className="mx-3 mt-2 text-xs text-muted-foreground">{t('slip.boostSinglesOnly')}</p>
+          )}
+          {effectiveMode === 'system' && (
+            <SystemSizePicker n={selections.length} sizes={sizes} value={effectiveSize} onChange={setSystemSize} />
+          )}
+          {effectiveMode === 'integral' && (
+            <p className="mx-3 mt-2 text-pretty text-xs leading-relaxed text-muted-foreground">
+              {t('slip.integralNote', { count })}
+            </p>
           )}
 
           <ul className="flex max-h-[36vh] flex-col gap-2 overflow-y-auto p-3">
@@ -187,7 +212,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
             {effectiveMode === 'multi' && <BoostLadder legs={selections.length} extraWin={boostExtra} />}
 
             <label className="flex flex-col gap-1 text-xs font-semibold text-muted-foreground">
-              {effectiveMode === 'single' && selections.length > 1 ? t('slip.stakePer') : t('slip.stake')}
+              {isCombo ? t('slip.stakePerTicket') : effectiveMode === 'single' && selections.length > 1 ? t('slip.stakePer') : t('slip.stake')}
               <input
                 type="number"
                 inputMode="numeric"
@@ -218,15 +243,50 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
                   <dd className="font-bold">{formatOdds(totalOdds)}</dd>
                 </div>
               )}
+              {isCombo && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{t('slip.tickets')}</dt>
+                  <dd className="font-bold">
+                    {count} × {formatMoney(stake)}
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">{t('slip.totalStake')}</dt>
                 <dd className="font-bold">{formatMoney(totalStake)}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-muted-foreground">{t('slip.potentialWin')}</dt>
-                <dd className="text-base font-extrabold text-success">{formatMoney(potential)}</dd>
-              </div>
+              {isCombo ? (
+                <>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t('slip.minWin')}</dt>
+                    <dd className="font-bold">{formatMoney(summary.min)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t('slip.maxWin')}</dt>
+                    <dd className="font-bold">{formatMoney(summary.max)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t('slip.allWin')}</dt>
+                    <dd className="text-base font-extrabold text-success">{formatMoney(summary.sum)}</dd>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{t('slip.potentialWin')}</dt>
+                  <dd className="text-base font-extrabold text-success">{formatMoney(potential)}</dd>
+                </div>
+              )}
             </dl>
+
+            {summary.capped && (
+              <p className="text-xs text-muted-foreground">{t('slip.capped', { amount: formatMoney(MAX_POTENTIAL_WIN) })}</p>
+            )}
+            {tooManyTickets && (
+              <p role="alert" className="text-xs font-bold text-destructive">
+                {t('slip.tooManyTickets', { count, max: MAX_TICKETS })}
+              </p>
+            )}
+            {isCombo && tickets.length > 0 && <TicketList tickets={tickets} stake={stake} />}
 
             {remainingToday !== null && (
               <p className={cn('text-xs', overLimit ? 'font-bold text-destructive' : 'text-muted-foreground')}>
@@ -244,14 +304,14 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
               <Button
                 size="lg"
                 onClick={submit}
-                disabled={pending || stake < STAKE_MIN || overLimit}
+                disabled={pending || stake < STAKE_MIN || overLimit || tooManyTickets}
                 className="h-11 w-full text-base font-extrabold"
               >
                 {pending ? t('slip.placing') : t('slip.place', { amount: formatMoney(totalStake) })}
               </Button>
             )}
 
-            <SlipShare keys={keys} totalOdds={totalOdds} />
+            <SlipShare keys={keys} totalOdds={shareOdds} />
 
             <p className="flex items-center gap-1.5 border-t border-border pt-3 text-[11px] text-muted-foreground">
               <ShieldCheck className="size-3.5 shrink-0 text-success" aria-hidden="true" />

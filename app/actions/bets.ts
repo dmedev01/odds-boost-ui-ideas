@@ -13,6 +13,17 @@ import { countLines, JACKPOT, JACKPOT_EVENTS, type JackpotPick } from '@/lib/dat
 import { getHippiqueBetType, getRace } from '@/lib/data/hippique'
 import { getDrawLottery, getInstantGame } from '@/lib/data/lotteries'
 import { STAKE_MAX, STAKE_MIN } from '@/lib/format'
+import {
+  availableModes,
+  buildTickets,
+  capWin,
+  hasSameMatch,
+  MAX_TICKETS,
+  type SlipMode,
+  summarizeTickets,
+  systemSizes,
+  ticketCount,
+} from '@/lib/slip-modes'
 
 export type ActionResult<T = object> = ({ ok: true; message: string } & T) | { ok: false; error: string }
 
@@ -50,7 +61,8 @@ async function withWallet<T>(run: (userId: string) => Promise<ActionResult<T>>):
 export async function placeSportsBet(input: {
   keys: string[]
   stake: number
-  mode: 'single' | 'multi'
+  mode: SlipMode
+  systemSize?: number
   seenOdds?: Record<string, number>
 }): Promise<ActionResult<{ count: number }>> {
   const keys = Array.from(new Set(Array.isArray(input?.keys) ? input.keys : []))
@@ -77,15 +89,21 @@ export async function placeSportsBet(input: {
     }
     return { ok: false, error: 'Live odds changed. Check the new prices and place your bet again.' }
   }
+  const modes = availableModes(resolved)
   const mode = resolved.length === 1 ? 'single' : input.mode
+  if (!modes.includes(mode)) {
+    if (resolved.some((s) => s.market === 'BOOST')) return { ok: false, error: 'Boosted odds can only be placed as singles.' }
+    if (hasSameMatch(resolved)) return { ok: false, error: 'Two selections from the same event need an integral bet.' }
+    return { ok: false, error: 'This bet type is not available for these selections.' }
+  }
 
-  if (mode === 'multi') {
-    if (new Set(resolved.map((s) => s.matchId)).size !== resolved.length) {
-      return { ok: false, error: 'A multiple cannot contain two selections from the same event.' }
-    }
-    if (resolved.some((s) => s.market === 'BOOST')) {
-      return { ok: false, error: 'Boosted odds can only be placed as singles.' }
-    }
+  const systemSize = Number(input.systemSize)
+  if (mode === 'system' && !systemSizes(resolved.length).includes(systemSize)) {
+    return { ok: false, error: 'Choose how many matches go in each system ticket.' }
+  }
+  const count = ticketCount(resolved, mode, systemSize)
+  if (count > MAX_TICKETS) {
+    return { ok: false, error: `This bet makes ${count} tickets. The limit is ${MAX_TICKETS}.` }
   }
 
   for (const s of resolved) {
@@ -105,16 +123,16 @@ export async function placeSportsBet(input: {
             betType: s.market === 'BOOST' ? 'Boosted single' : 'Single',
             stake: String(input.stake),
             totalOdds: String(s.odds),
-            potentialWin: String(Math.round(input.stake * s.odds)),
+            potentialWin: String(Math.round(capWin(input.stake * s.odds))),
             selections: [s],
             reference: newReference(),
           })
         }
-      } else {
+      } else if (mode === 'multi') {
         const totalOdds = resolved.reduce((acc, s) => acc * s.odds, 1)
         const gross = input.stake * totalOdds
         const bonusPct = accaBoostPct(resolved.length)
-        const potential = gross + ((gross - input.stake) * bonusPct) / 100
+        const potential = capWin(gross + ((gross - input.stake) * bonusPct) / 100)
         await debit(tx, userId, input.stake, 'bet', `Sports multiple (${resolved.length} legs)`)
         await tx.insert(bets).values({
           userId,
@@ -126,9 +144,32 @@ export async function placeSportsBet(input: {
           selections: resolved,
           reference: newReference(),
         })
+      } else {
+        const summary = summarizeTickets(buildTickets(resolved, mode, systemSize), input.stake)
+        const label =
+          mode === 'system'
+            ? `System ${systemSize}/${resolved.length} (${count} tickets)`
+            : `Integral (${count} tickets)`
+        await debit(tx, userId, input.stake * count, 'bet', `Sports ${label}`)
+        await tx.insert(bets).values({
+          userId,
+          product: 'sports',
+          betType: label,
+          stake: String(input.stake * count),
+          totalOdds: null,
+          potentialWin: String(Math.round(summary.sum)),
+          selections: resolved,
+          reference: newReference(),
+        })
       }
     })
-    return { ok: true, message: mode === 'single' && resolved.length > 1 ? `${resolved.length} bets placed` : 'Bet placed', count: resolved.length }
+    const message =
+      mode === 'single' && resolved.length > 1
+        ? `${resolved.length} bets placed`
+        : mode === 'system' || mode === 'integral'
+          ? `Bet placed: ${count} tickets`
+          : 'Bet placed'
+    return { ok: true, message, count }
   })
 }
 
