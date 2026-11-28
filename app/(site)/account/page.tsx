@@ -54,43 +54,43 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </p>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 md:flex">
           <Link
             href="/account?tab=deposit#funds"
-            className="flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-extrabold text-primary-foreground"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground"
           >
-            <ArrowDownToLine className="size-4" aria-hidden />
+            <ArrowDownToLine className="size-5" aria-hidden />
             Deposit
           </Link>
           <Link
             href="/account?tab=withdraw#funds"
-            className="flex h-11 items-center gap-2 rounded-lg bg-background/40 px-5 text-sm font-extrabold"
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-background/40 px-5 text-base font-extrabold"
           >
-            <ArrowUpFromLine className="size-4" aria-hidden />
+            <ArrowUpFromLine className="size-5" aria-hidden />
             Withdraw
           </Link>
-          <SignOutButton />
         </div>
       </header>
 
-      <section aria-label="Summary" className="grid gap-3 md:grid-cols-2">
+      <section aria-label="Summary" className="grid grid-cols-2 gap-3">
         <Link href="/my-bets" className="flex flex-col gap-1 rounded-xl bg-surface p-4">
           <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Open bets</span>
-          {openBets.length > 0 ? (
-            <p className="text-pretty text-sm leading-relaxed">
-              You have <strong className="text-lg font-black">{openBets.length}</strong>{' '}
-              {openBets.length === 1 ? 'bet' : 'bets'} waiting for results. If they win, you get up to{' '}
-              <strong className="font-black text-success">{formatMoney(openReturn)}</strong>.
-            </p>
-          ) : (
-            <p className="text-sm leading-relaxed">No bets waiting for results right now.</p>
-          )}
+          <strong className="text-2xl font-black">{openBets.length}</strong>
+          <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+            {openBets.length > 0 ? (
+              <>
+                Can win up to <span className="font-extrabold text-success">{formatMoney(openReturn)}</span>
+              </>
+            ) : (
+              'Waiting for results'
+            )}
+          </p>
         </Link>
-        <a href="#limits" className="flex flex-col gap-2 rounded-xl bg-surface p-4">
+        <a href="#limits" className="flex flex-col gap-1 rounded-xl bg-surface p-4">
           <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Spent today</span>
-          <p className="text-sm leading-relaxed">
-            <strong className="text-lg font-black">{formatMoney(limits.staked)}</strong>
-            {limits.limit ? ` of your ${formatMoney(limits.limit)} daily limit` : ' · no daily limit set'}
+          <strong className="text-2xl font-black">{formatMoney(limits.staked)}</strong>
+          <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+            {limits.limit ? `of your ${formatMoney(limits.limit)} limit` : 'No daily limit set'}
           </p>
           {limits.limit ? (
             <div
@@ -110,22 +110,26 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </a>
       </section>
 
-      <nav aria-label="Shortcuts" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <nav aria-label="Shortcuts" className="grid grid-cols-4 gap-2 md:gap-3">
         {QUICK_LINKS.map(({ href, label, hint, icon: Icon }) => (
-          <Link key={href} href={href} className="flex items-center gap-3 rounded-xl bg-surface p-4 hover:bg-surface/70">
+          <Link
+            key={href}
+            href={href}
+            className="flex flex-col items-center gap-2 rounded-xl bg-surface px-1 py-3 text-center hover:bg-surface/70 md:flex-row md:gap-3 md:p-4 md:text-left"
+          >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand">
               <Icon className="size-5" aria-hidden />
             </span>
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-extrabold">{label}</span>
-              <span className="truncate text-xs text-muted-foreground">{hint}</span>
+              <span className="text-xs font-extrabold leading-tight md:truncate md:text-sm">{label}</span>
+              <span className="hidden truncate text-xs text-muted-foreground lg:block">{hint}</span>
             </span>
           </Link>
         ))}
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
-        <section id="funds" aria-labelledby="funds-title" className="flex scroll-mt-24 flex-col gap-2">
+        <section id="funds" aria-labelledby="funds-title" className="order-2 flex scroll-mt-24 flex-col gap-2 lg:order-none">
           <h2 id="funds-title" className="text-lg font-black">
             Add or take out money
           </h2>
@@ -151,6 +155,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </section>
 
         <AccountActivity transactions={txs} />
+      </div>
+
+      <div className="flex justify-center border-t border-border pt-4">
+        <SignOutButton />
       </div>
     </div>
   )
