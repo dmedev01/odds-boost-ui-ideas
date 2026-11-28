@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowDownToLine, ArrowUpFromLine, Radio, ScanLine, ShieldCheck, Ticket } from 'lucide-react'
+import { Radio, ScanLine, ShieldCheck, Ticket } from 'lucide-react'
 import { AccountActivity } from '@/components/account/account-activity'
 import { BetHistory } from '@/components/account/bet-history'
-import { FundsForm } from '@/components/account/funds-form'
 import { LimitsForm } from '@/components/account/limits-form'
 import { SignOutButton } from '@/components/account/sign-out-button'
+import { WalletTabs } from '@/components/v4/wallet-tabs'
 import { formatMoney } from '@/lib/format'
 import { getSession } from '@/lib/session'
 import { ensureWallet, getLimitStatus, listBets, listTransactions } from '@/lib/wallet'
@@ -26,9 +26,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   if (!session?.user) redirect('/sign-in')
   const userId = session.user.id
   const { tab } = await searchParams
-  const fundsTab = tab === 'withdraw' ? 'withdraw' : 'deposit'
+  if (tab === 'deposit' || tab === 'withdraw') redirect(`/wallet/${tab}`)
 
-  const [wallet, bets, txs, limits] = await Promise.all([
+  const [, bets, txs, limits] = await Promise.all([
     ensureWallet(userId),
     listBets(userId, 50),
     listTransactions(userId, 15),
@@ -37,40 +37,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const openBets = bets.filter((b) => b.status === 'open')
   const openReturn = openBets.reduce((sum, b) => sum + Number(b.potentialWin ?? 0), 0)
-  const firstName = session.user.name?.split(' ')[0] ?? 'player'
   const limitUsed = limits.limit ? Math.min(100, Math.round((limits.staked / limits.limit) * 100)) : 0
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-5 rounded-xl bg-brand p-5 md:flex-row md:items-end md:justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-bold text-white/80">Hello, {firstName}</p>
-          <p className="text-xs font-bold uppercase tracking-wide text-white/70">Your balance</p>
-          <p className="text-4xl font-black">{formatMoney(wallet.balance)}</p>
-          {Number(wallet.bonus) > 0 && (
-            <p className="text-sm font-bold text-white/80">
-              {'+ '}
-              <span className="text-primary">{formatMoney(wallet.bonus)}</span> bonus
-            </p>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2 md:flex">
-          <Link
-            href="/account?tab=deposit#funds"
-            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-base font-extrabold text-primary-foreground"
-          >
-            <ArrowDownToLine className="size-5" aria-hidden />
-            Deposit
-          </Link>
-          <Link
-            href="/account?tab=withdraw#funds"
-            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-background/40 px-5 text-base font-extrabold"
-          >
-            <ArrowUpFromLine className="size-5" aria-hidden />
-            Withdraw
-          </Link>
-        </div>
-      </header>
+      <WalletTabs greeting />
 
       <section aria-label="Summary" className="grid grid-cols-2 gap-3">
         <Link href="/my-bets" className="flex flex-col gap-1 rounded-xl bg-surface p-4">
@@ -128,14 +99,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         ))}
       </nav>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
-        <section id="funds" aria-labelledby="funds-title" className="order-2 flex scroll-mt-24 flex-col gap-2 lg:order-none">
-          <h2 id="funds-title" className="text-lg font-black">
-            Add or take out money
-          </h2>
-          <FundsForm key={fundsTab} initial={fundsTab} />
-        </section>
-
+      <div className="grid gap-4 lg:grid-cols-2">
         <section aria-labelledby="recent" className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 id="recent" className="text-lg font-black">
@@ -147,15 +111,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </div>
           <BetHistory bets={bets.slice(0, 4)} />
         </section>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
-        <section id="limits" aria-label="Daily spending limit" className="flex scroll-mt-24 flex-col gap-2">
-          <LimitsForm limit={limits.limit} staked={limits.staked} pending={limits.pending} />
-        </section>
 
         <AccountActivity transactions={txs} />
       </div>
+
+      <section id="limits" aria-label="Daily spending limit" className="flex scroll-mt-24 flex-col gap-2 lg:max-w-md">
+        <LimitsForm limit={limits.limit} staked={limits.staked} pending={limits.pending} />
+      </section>
 
       <div className="flex justify-center border-t border-border pt-4">
         <SignOutButton />

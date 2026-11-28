@@ -38,7 +38,7 @@ export async function SiteHeader({ user, balance }: { user: { name: string } | n
                   <span className="text-sm font-extrabold">{formatMoney(balance)}</span>
                 </Link>
                 <Link
-                  href="/account?tab=deposit"
+                  href="/wallet/deposit"
                   className={buttonVariants({ className: 'h-9 gap-1 px-3 font-extrabold' })}
                 >
                   <Plus className="size-4" aria-hidden="true" />

@@ -317,7 +317,7 @@ export function BetSlipPanel({ className, headerClassName }: { className?: strin
               <ShieldCheck className="size-3.5 shrink-0 text-success" aria-hidden="true" />
               <span>
                 {t('slip.safety')} ·{' '}
-                <Link href="/account?tab=limits" className="underline underline-offset-2 hover:text-foreground">
+                <Link href="/account#limits" className="underline underline-offset-2 hover:text-foreground">
                   {limitStatus?.limit != null ? t('slip.manageLimit') : t('slip.setLimit')}
                 </Link>
               </span>
