@@ -76,7 +76,7 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         {signUp && (
           <label className="flex items-start gap-2 text-xs font-semibold leading-relaxed text-muted-foreground">
             <input name="age" type="checkbox" className="mt-0.5 size-4 accent-primary" />
-            I confirm I am 18 or older and accept the terms and responsible gaming policy.
+            I confirm I am 21 or older and accept the terms and responsible gaming policy.
           </label>
         )}
         {error && (

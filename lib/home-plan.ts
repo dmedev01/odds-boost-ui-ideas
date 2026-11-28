@@ -50,7 +50,7 @@ export function planHome(enabled: readonly ProductId[] = ENABLED_PRODUCTS): Home
   const tiledLeagues = new Set(tiles.flatMap((t) => (t.kind === 'league' ? [t.league] : [])))
 
   const candidates: Omit<Extract<HomeSection, { kind: 'matches' }>, 'kind'>[] = [
-    { key: 'live', title: { key: 'home.liveNow' }, href: '/sports?live=1', matches: live, live: true },
+    { key: 'live', title: { key: 'home.liveNow' }, href: '/live', matches: live, live: true },
     { key: 'football', title: { key: 'home.topFootball' }, href: '/sports', matches: upcoming.filter((m) => m.sport === 'football') },
     ...leagues.map((l) => ({
       key: `league:${l.name}`,

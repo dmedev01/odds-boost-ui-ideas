@@ -23,7 +23,7 @@ export interface NavItem {
 
 const HOME: NavItem = { href: '/', labelKey: 'nav.home', icon: Home, match: (p) => p === '/' }
 const SPORTS: NavItem = { href: '/sports', labelKey: 'nav.sports', icon: Volleyball, match: (p, s) => p === '/sports' && !s.includes('live=1') }
-const LIVE: NavItem = { href: '/sports?live=1', labelKey: 'nav.live', icon: Radio, match: (p, s) => p === '/sports' && s.includes('live=1') }
+const LIVE: NavItem = { href: '/live', labelKey: 'nav.live', icon: Radio, match: (p, s) => p === '/live' || (p === '/sports' && s.includes('live=1')) }
 const BOOSTS: NavItem = { href: '/boosts', labelKey: 'nav.boosts', icon: BoltIcon }
 const JACKPOT: NavItem = { href: '/jackpot', labelKey: 'nav.jackpot', icon: Trophy }
 const HIPPIQUE: NavItem = { href: '/hippique', labelKey: 'nav.hippique', icon: HorseIcon }

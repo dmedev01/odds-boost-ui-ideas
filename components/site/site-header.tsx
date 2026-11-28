@@ -6,6 +6,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { formatMoney } from '@/lib/format'
 import { getT } from '@/lib/i18n/server'
 import { Logo } from './logo'
+import { NotificationsBell } from './notifications-bell'
 import { ProductNav } from './product-nav'
 
 export async function SiteHeader({ user, balance }: { user: { name: string } | null; balance: number | null }) {
@@ -27,6 +28,7 @@ export async function SiteHeader({ user, balance }: { user: { name: string } | n
             <DataSaverToggle />
             {user ? (
               <>
+                <NotificationsBell />
                 <Link
                   href="/account"
                   className="flex flex-col items-end rounded-lg px-2 py-1 leading-tight hover:bg-surface"

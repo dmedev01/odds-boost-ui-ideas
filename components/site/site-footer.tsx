@@ -8,7 +8,7 @@ const ALL_COLUMNS = [
     title: 'Betting',
     links: [
       { href: '/sports', label: 'Sports' },
-      { href: '/sports?live=1', label: 'Live betting' },
+      { href: '/live', label: 'Live betting' },
       { href: '/boosts', label: 'Odds Boosts' },
       { href: '/jackpot', label: 'Mega Jackpot' },
     ],
