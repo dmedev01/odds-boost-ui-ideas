@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { BetHistory } from '@/components/account/bet-history'
+import { BackButton } from '@/components/site/back-button'
 import { getUserId } from '@/lib/session'
 import { listBets } from '@/lib/wallet'
 
@@ -13,7 +14,10 @@ export default async function MyBetsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-black">My bets</h1>
+      <div className="flex flex-col gap-1">
+        <BackButton fallback="/account" />
+        <h1 className="text-2xl font-black">My bets</h1>
+      </div>
       <BetHistory bets={bets} />
     </div>
   )
