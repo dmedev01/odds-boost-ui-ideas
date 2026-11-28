@@ -1,4 +1,5 @@
 import { LiteImage } from '@/components/lite/lite-mode'
+import { BackButton } from '@/components/site/back-button'
 
 export function PageHeader({
   eyebrow,
@@ -14,6 +15,8 @@ export function PageHeader({
   children?: React.ReactNode
 }) {
   return (
+    <>
+    <BackButton className="mb-2" />
     <header className="relative mb-4 overflow-hidden rounded-xl bg-brand">
       {image && (
         <LiteImage
@@ -33,5 +36,6 @@ export function PageHeader({
         {children}
       </div>
     </header>
+    </>
   )
 }

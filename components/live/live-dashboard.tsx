@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Radio } from 'lucide-react'
+import { BackButton } from '@/components/site/back-button'
 import { MatchList } from '@/components/sports/match-row'
 import type { Match } from '@/lib/data/sports'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,7 @@ export function LiveDashboard({
 }) {
   return (
     <div className="flex flex-col gap-4">
+      <BackButton />
       <header className="flex flex-col gap-3 rounded-xl bg-surface p-4">
         <div className="flex items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/15 text-destructive">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getBookingKeys } from '@/app/actions/booking'
 import { LoadSlipButton } from '@/components/betslip/load-slip-button'
+import { BackButton } from '@/components/site/back-button'
 import { currentBucket } from '@/lib/data/live'
 import { resolveSelection } from '@/lib/data/selections'
 import { formatOdds } from '@/lib/format'
@@ -35,6 +36,7 @@ export default async function SharedSlipPage({ params }: { params: Promise<{ cod
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4">
+      <BackButton className="-mb-2" />
       <header className="flex flex-col gap-1 rounded-xl bg-brand p-5">
         <p className="text-xs font-extrabold uppercase tracking-widest text-primary">{t('shared.eyebrow', { code: label })}</p>
         <h1 className="text-balance text-2xl font-black">
