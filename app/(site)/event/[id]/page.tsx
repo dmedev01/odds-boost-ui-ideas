@@ -24,9 +24,11 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   const [locale, { t }] = await Promise.all([getLocale(), getT()])
   const markets = getMarkets(match, locale)
   const sameLeague = MATCHES.filter((m) => m.league === match.league && m.id !== match.id).slice(0, 10)
+  const otherLive = match.live ? MATCHES.filter((m) => m.live && m.id !== match.id).slice(0, 10) : []
 
   return (
     <div className="flex flex-col gap-4">
+      {otherLive.length > 0 && <LeagueStrip title={t('live.others')} matches={otherLive} />}
       <EventHeader
         match={match}
         marketCount={t('event.markets', { n: markets.length })}

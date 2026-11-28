@@ -24,7 +24,7 @@ function describe(tile: HomeTile, t: T) {
       return { href: PRODUCT_HREF[tile.id], label: t(p.label), sub: p.sub ? t(p.sub) : formatMoney(JACKPOT.pool), Icon: p.icon }
     }
     case 'live':
-      return { href: '/sports?live=1', label: t('nav.live'), sub: t('home.liveCount', { n: tile.count }), Icon: Radio }
+      return { href: '/live', label: t('nav.live'), sub: t('home.liveCount', { n: tile.count }), Icon: Radio }
     case 'boosts':
       return { href: '/boosts', label: t('nav.boosts'), sub: t('home.boostsCount', { n: tile.count }), Icon: BoltIcon }
     case 'league':
