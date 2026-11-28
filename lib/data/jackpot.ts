@@ -25,6 +25,16 @@ export const JACKPOT = {
   ],
 }
 
+/** Next Saturday 14:00 Cameroon time (WAT, UTC+1), matching `JACKPOT.closes`. */
+export function jackpotClosesAt(now = new Date()): Date {
+  const close = new Date(now)
+  close.setUTCHours(13, 0, 0, 0)
+  const daysToSaturday = (6 - close.getUTCDay() + 7) % 7
+  close.setUTCDate(close.getUTCDate() + daysToSaturday)
+  if (close <= now) close.setUTCDate(close.getUTCDate() + 7)
+  return close
+}
+
 export const JACKPOT_EVENTS: JackpotEvent[] = [
   { id: 'j1', league: 'Premier League', home: 'Tottenham', away: 'Newcastle', kickoff: 'Sat 16:00', odds: { '1': 2.35, X: 3.5, '2': 2.9 } },
   { id: 'j2', league: 'Premier League', home: 'Aston Villa', away: 'Brighton', kickoff: 'Sat 16:00', odds: { '1': 1.95, X: 3.7, '2': 3.6 } },
